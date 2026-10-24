@@ -1,0 +1,133 @@
+[
+  {
+    "id": "patient_001",
+    "display_id": "TH-P-001",
+    "name": "Aarav Mehta",
+    "age": 24,
+    "gender": "male",
+    "blood_type": "O+",
+    "allergies": ["penicillin"],
+    "conditions": ["mild persistent asthma"],
+    "medications": ["albuterol 100 mcg inhaler (as needed)"],
+    "previous_visits": [
+      {
+        "date": "2026-02-14",
+        "facility": "Sector 19 Primary Care Clinic",
+        "reason": "Routine asthma follow-up",
+        "outcome": "Well controlled; inhaler technique reviewed"
+      },
+      {
+        "date": "2025-11-03",
+        "facility": "Sunrise Multispecialty Hospital",
+        "reason": "Acute wheezing after playing cricket",
+        "outcome": "Nebulized in ER, discharged the same day"
+      }
+    ],
+    "insurance": {
+      "provider": "Star Health",
+      "policy_number": "SH-4471-88213",
+      "coverage": "cashless",
+      "valid_until": "2027-03-31"
+    },
+    "emergency_contact": {
+      "name": "Neha Mehta",
+      "relation": "mother",
+      "phone": "+91-98765-43210"
+    },
+    "is_synthetic": true
+  },
+  {
+    "id": "patient_002",
+    "display_id": "TH-P-002",
+    "name": "Gurpreet Singh",
+    "age": 71,
+    "gender": "male",
+    "blood_type": "B+",
+    "allergies": ["sulfonamides"],
+    "conditions": [
+      "type 2 diabetes mellitus",
+      "hypertension",
+      "atrial fibrillation"
+    ],
+    "medications": [
+      "metformin 1000 mg twice daily",
+      "amlodipine 5 mg once daily",
+      "warfarin 5 mg once daily (INR target 2.0-3.0)"
+    ],
+    "previous_visits": [
+      {
+        "date": "2026-10-10",
+        "facility": "Horizon Multispecialty Hospital",
+        "reason": "Routine INR monitoring",
+        "outcome": "INR 2.6, within target range"
+      },
+      {
+        "date": "2026-06-22",
+        "facility": "Sunrise Multispecialty Hospital",
+        "reason": "Hypertensive urgency",
+        "outcome": "Blood pressure controlled, discharged after observation"
+      },
+      {
+        "date": "2026-01-08",
+        "facility": "Chandigarh Teaching & Research Hospital",
+        "reason": "Diabetic retinopathy screening",
+        "outcome": "Mild non-proliferative changes, annual review advised"
+      }
+    ],
+    "insurance": {
+      "provider": "HDFC ERGO",
+      "policy_number": "HE-9932-10477",
+      "coverage": "cashless",
+      "valid_until": "2027-08-15"
+    },
+    "emergency_contact": {
+      "name": "Jasleen Singh",
+      "relation": "daughter",
+      "phone": "+91-98140-22117"
+    },
+    "is_synthetic": true
+  },
+  {
+    "id": "patient_003",
+    "display_id": "TH-P-003",
+    "name": "Ananya Sharma",
+    "age": 29,
+    "gender": "female",
+    "blood_type": "A-",
+    "allergies": [],
+    "conditions": [
+      "generalized anxiety disorder",
+      "mild gastroesophageal reflux disease"
+    ],
+    "medications": [
+      "escitalopram 10 mg once daily",
+      "pantoprazole 40 mg once daily"
+    ],
+    "previous_visits": [
+      {
+        "date": "2026-09-05",
+        "facility": "MindWell Mental Health Clinic",
+        "reason": "Anxiety counselling session",
+        "outcome": "Stable; continue current therapy"
+      },
+      {
+        "date": "2026-07-19",
+        "facility": "Sector 19 Primary Care Clinic",
+        "reason": "Heartburn and regurgitation",
+        "outcome": "Started pantoprazole; dietary advice given"
+      }
+    ],
+    "insurance": {
+      "provider": "Niva Bupa",
+      "policy_number": "NB-2210-77345",
+      "coverage": "reimbursement",
+      "valid_until": "2027-01-31"
+    },
+    "emergency_contact": {
+      "name": "Rohan Verma",
+      "relation": "friend",
+      "phone": "+91-99880-43219"
+    },
+    "is_synthetic": true
+  }
+]

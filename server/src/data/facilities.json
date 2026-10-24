@@ -1,0 +1,122 @@
+[
+  {
+    "id": "facility_001",
+    "name": "Sunrise Multispecialty Hospital",
+    "type": "multi_specialty_hospital",
+    "distance_km": 2.4,
+    "eta_min": 9,
+    "capacity_pct": 94,
+    "er_beds_available": 2,
+    "er_wait_min": 85,
+    "specialties": [
+      "cardiology",
+      "general_medicine",
+      "orthopedics",
+      "pulmonology",
+      "emergency"
+    ],
+    "has_cath_lab": false,
+    "has_icu": true,
+    "status": "AVAILABLE",
+    "coordinates": {
+      "lat": 30.7281,
+      "lng": 76.7752
+    },
+    "operational_data_simulated": true
+  },
+  {
+    "id": "facility_002",
+    "name": "Horizon Multispecialty Hospital",
+    "type": "multi_specialty_hospital",
+    "distance_km": 3.1,
+    "eta_min": 8,
+    "capacity_pct": 40,
+    "er_beds_available": 14,
+    "er_wait_min": 18,
+    "specialties": [
+      "cardiology",
+      "general_medicine",
+      "neurology",
+      "emergency"
+    ],
+    "has_cath_lab": true,
+    "has_icu": true,
+    "status": "AVAILABLE",
+    "coordinates": {
+      "lat": 30.733,
+      "lng": 76.78
+    },
+    "operational_data_simulated": true
+  },
+  {
+    "id": "facility_003",
+    "name": "Chandigarh Teaching & Research Hospital",
+    "type": "teaching_hospital",
+    "distance_km": 5.8,
+    "eta_min": 14,
+    "capacity_pct": 62,
+    "er_beds_available": 9,
+    "er_wait_min": 32,
+    "specialties": [
+      "cardiology",
+      "general_medicine",
+      "neurology",
+      "pediatrics",
+      "emergency"
+    ],
+    "has_cath_lab": true,
+    "has_icu": true,
+    "status": "AVAILABLE",
+    "coordinates": {
+      "lat": 30.709,
+      "lng": 76.777
+    },
+    "operational_data_simulated": true
+  },
+  {
+    "id": "facility_004",
+    "name": "Sector 19 Primary Care Clinic",
+    "type": "primary_care_clinic",
+    "distance_km": 1.6,
+    "eta_min": 6,
+    "capacity_pct": 25,
+    "er_beds_available": 3,
+    "er_wait_min": 10,
+    "specialties": [
+      "general_medicine",
+      "primary_care",
+      "family_medicine"
+    ],
+    "has_cath_lab": false,
+    "has_icu": false,
+    "status": "AVAILABLE",
+    "coordinates": {
+      "lat": 30.739,
+      "lng": 76.788
+    },
+    "operational_data_simulated": true
+  },
+  {
+    "id": "facility_005",
+    "name": "MindWell Mental Health Clinic",
+    "type": "mental_health_clinic",
+    "distance_km": 2.9,
+    "eta_min": 11,
+    "capacity_pct": 30,
+    "er_beds_available": 0,
+    "er_wait_min": 0,
+    "specialties": [
+      "mental_health",
+      "psychiatry",
+      "counseling"
+    ],
+    "has_cath_lab": false,
+    "has_icu": false,
+    "status": "LIMITED",
+    "coordinates": {
+      "lat": 30.741,
+      "lng": 76.782
+    },
+    "operational_data_simulated": true
+  }
+]

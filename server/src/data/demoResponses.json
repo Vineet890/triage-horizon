@@ -1,0 +1,131 @@
+{
+  "patient_001": {
+    "patient_id": "patient_001",
+    "symptom": "Persistent wheezing and mild chest tightness after climbing stairs; reliever inhaler used twice with partial relief.",
+    "protocol_matched": "RESP-002: Asthma Exacerbation Protocol",
+    "acuity": "MODERATE",
+    "care_tier": "urgent_specialist",
+    "selected_facility": {
+      "id": "facility_004",
+      "name": "Sector 19 Primary Care Clinic",
+      "reason": "Closest appropriate option at 1.6 km / 6 min with 25% capacity. Same-day primary care slot available for nebulizer treatment and asthma review; no red-flag features requiring an ER."
+    },
+    "rejected_facilities": [
+      {
+        "id": "facility_001",
+        "name": "Sunrise Multispecialty Hospital",
+        "reason": "94% capacity with an 85-minute ER wait and only 2 beds free; unsuitable for a non-emergency asthma flare."
+      },
+      {
+        "id": "facility_002",
+        "name": "Horizon Multispecialty Hospital",
+        "reason": "Capacity is available but it is farther away and its emergency resources are reserved for higher-acuity referrals."
+      },
+      {
+        "id": "facility_003",
+        "name": "Chandigarh Teaching & Research Hospital",
+        "reason": "14-minute ETA and teaching-hospital caseload; appropriate only for higher-acuity presentations."
+      },
+      {
+        "id": "facility_005",
+        "name": "MindWell Mental Health Clinic",
+        "reason": "Mental health services only; cannot assess or treat respiratory symptoms."
+      }
+    ],
+    "special_flags": [
+      "ASTHMA_HISTORY",
+      "PENICILLIN_ALLERGY",
+      "RELIEVER_OVERUSE"
+    ],
+    "timestamp": "2026-10-24T09:12:00.000Z",
+    "is_simulated": true
+  },
+  "patient_002": {
+    "patient_id": "patient_002",
+    "symptom": "Sudden palpitations with dizziness and new left-arm weakness; patient is anticoagulated with warfarin.",
+    "protocol_matched": "CARD-001: Cardiac Protocol",
+    "acuity": "CRITICAL",
+    "care_tier": "emergency",
+    "selected_facility": {
+      "id": "facility_003",
+      "name": "Chandigarh Teaching & Research Hospital",
+      "reason": "Comprehensive teaching hospital with 24/7 stroke team, cath lab and ICU at 62% capacity (14 min ETA). Warfarin therapy raises intracranial haemorrhage risk, so urgent imaging and reversal capability are required."
+    },
+    "rejected_facilities": [
+      {
+        "id": "facility_001",
+        "name": "Sunrise Multispecialty Hospital",
+        "reason": "94% capacity, no cath lab and an 85-minute ER wait; cannot safely absorb a suspected stroke on anticoagulation."
+      },
+      {
+        "id": "facility_002",
+        "name": "Horizon Multispecialty Hospital",
+        "reason": "Has cath lab and ICU but no 24/7 stroke team or on-site anticoagulation reversal protocol; closer facility is not definitive care."
+      },
+      {
+        "id": "facility_004",
+        "name": "Sector 19 Primary Care Clinic",
+        "reason": "Primary care clinic without ICU, imaging or cath lab; unsafe destination for suspected stroke."
+      },
+      {
+        "id": "facility_005",
+        "name": "MindWell Mental Health Clinic",
+        "reason": "Out of scope for acute neurological and cardiac symptoms."
+      }
+    ],
+    "special_flags": [
+      "ANTICOAGULANT_THERAPY_WARFARIN",
+      "BLEEDING_RISK",
+      "SUSPECTED_STROKE",
+      "SULFA_ALLERGY"
+    ],
+    "timestamp": "2026-10-24T09:18:00.000Z",
+    "is_simulated": true
+  },
+  "patient_003": {
+    "patient_id": "patient_003",
+    "symptom": "Recurring heartburn and difficulty swallowing, worse during anxiety episodes; no vomiting, weight loss or bleeding.",
+    "protocol_matched": "GI-004: GERD / Dyspepsia Protocol",
+    "acuity": "LOW",
+    "care_tier": "telehealth",
+    "selected_facility": {
+      "id": "telehealth",
+      "name": "Triage Horizon Telehealth",
+      "reason": "Low-acuity GERD with an anxiety component. Telehealth can optimise PPI therapy, screen for alarm features and coordinate mental-health follow-up without an in-person visit."
+    },
+    "rejected_facilities": [
+      {
+        "id": "facility_001",
+        "name": "Sunrise Multispecialty Hospital",
+        "reason": "94% capacity and long ER wait; unnecessary resource use for low-acuity reflux."
+      },
+      {
+        "id": "facility_002",
+        "name": "Horizon Multispecialty Hospital",
+        "reason": "Emergency-capable hospital is not required for uncomplicated GERD."
+      },
+      {
+        "id": "facility_003",
+        "name": "Chandigarh Teaching & Research Hospital",
+        "reason": "Teaching hospital at 14 minutes; overkill for a low-acuity presentation."
+      },
+      {
+        "id": "facility_004",
+        "name": "Sector 19 Primary Care Clinic",
+        "reason": "In-person primary care is a fallback if alarm features appear, but telehealth is faster and equally safe today."
+      },
+      {
+        "id": "facility_005",
+        "name": "MindWell Mental Health Clinic",
+        "reason": "Can support anxiety care but cannot manage the reflux component; better suited to a later referral."
+      }
+    ],
+    "special_flags": [
+      "ANXIETY_HISTORY",
+      "GERD",
+      "TELEHEALTH_ELIGIBLE"
+    ],
+    "timestamp": "2026-10-24T09:26:00.000Z",
+    "is_simulated": true
+  }
+}

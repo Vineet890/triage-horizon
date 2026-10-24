@@ -1,8 +1,12 @@
 import express from 'express';
 import cors from 'cors';
 import http from 'node:http';
-import { Server } from 'socket.io';
 import { PORT } from './config.js';
+import { initSocket } from './socket.js';
+import facilityStateManager from './services/facilityStateManager.js';
+import authRoutes from './routes/auth.routes.js';
+import facilitiesRoutes from './routes/facilities.routes.js';
+import triageRoutes from './routes/triage.routes.js';
 
 const app = express();
 
@@ -11,23 +15,20 @@ app.use(express.json());
 
 const httpServer = http.createServer(app);
 
-const io = new Server(httpServer, {
-  cors: {
-    origin: '*',
-    methods: ['GET', 'POST'],
-  },
-});
+// Socket.IO is created first so routes and services can emit through it.
+const io = initSocket(httpServer);
+facilityStateManager.setIO(io);
 
 app.get('/health', (req, res) => {
   res.status(200).json({ status: 'ok', service: 'triage-horizon-backend' });
 });
 
-io.on('connection', (socket) => {
-  console.log(`[socket.io] client connected: ${socket.id}`);
+app.use('/api/auth', authRoutes);
+app.use('/api/facilities', facilitiesRoutes);
+app.use('/api/triage', triageRoutes);
 
-  socket.on('disconnect', (reason) => {
-    console.log(`[socket.io] client disconnected: ${socket.id} (${reason})`);
-  });
+app.use((req, res) => {
+  res.status(404).json({ error: 'Not found', path: req.originalUrl });
 });
 
 httpServer.listen(PORT, () => {
