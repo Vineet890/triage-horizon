@@ -2,14 +2,12 @@ import express from 'express';
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
+import Patient from '../models/Patient.js';
 import { authenticate, requireRole } from '../middleware/auth.js';
 import { emitToAll, getIO } from '../socket.js';
 
 const router = express.Router();
 
-const PATIENTS_PATH = fileURLToPath(
-  new URL('../data/patients.json', import.meta.url)
-);
 const DEMO_RESPONSES_PATH = fileURLToPath(
   new URL('../data/demoResponses.json', import.meta.url)
 );
@@ -92,33 +90,41 @@ router.get(
   '/:patientId',
   authenticate,
   requireRole(['DOCTOR', 'ADMIN']),
-  (req, res) => {
-    const patients = readJson(PATIENTS_PATH);
-    const patient = patients.find((entry) => entry.id === req.params.patientId);
+  async (req, res) => {
+    try {
+      // Base patient records live in MongoDB; the handoff overlay stays mock.
+      const patient = await Patient.findOne({ id: req.params.patientId }).lean();
 
-    if (!patient) {
-      return res
-        .status(404)
-        .json({ error: `Unknown patient '${req.params.patientId}'` });
+      if (!patient) {
+        return res
+          .status(404)
+          .json({ error: `Unknown patient '${req.params.patientId}'` });
+      }
+
+      const demoResponses = readJson(DEMO_RESPONSES_PATH);
+      const decision = demoResponses[patient.id] ?? null;
+      const acuity = decision?.acuity ?? 'LOW';
+
+      const handoff = {
+        symptoms: decision?.symptom ? [decision.symptom] : patient.conditions,
+        protocol_matched: decision?.protocol_matched ?? 'GEN-000: General Triage Protocol',
+        acuity,
+        special_flags: decision?.special_flags ?? [],
+        recommended_actions: RECOMMENDED_ACTIONS[acuity] ?? RECOMMENDED_ACTIONS.LOW,
+        generated_at: new Date().toISOString(),
+      };
+
+      return res.status(200).json({
+        ...patient,
+        handoff,
+      });
+    } catch (error) {
+      console.error(
+        `[handoff] Failed to load patient '${req.params.patientId}':`,
+        error.message
+      );
+      return res.status(500).json({ error: 'Failed to load patient record' });
     }
-
-    const demoResponses = readJson(DEMO_RESPONSES_PATH);
-    const decision = demoResponses[patient.id] ?? null;
-    const acuity = decision?.acuity ?? 'LOW';
-
-    const handoff = {
-      symptoms: decision?.symptom ? [decision.symptom] : patient.conditions,
-      protocol_matched: decision?.protocol_matched ?? 'GEN-000: General Triage Protocol',
-      acuity,
-      special_flags: decision?.special_flags ?? [],
-      recommended_actions: RECOMMENDED_ACTIONS[acuity] ?? RECOMMENDED_ACTIONS.LOW,
-      generated_at: new Date().toISOString(),
-    };
-
-    return res.status(200).json({
-      ...patient,
-      handoff,
-    });
   }
 );
 

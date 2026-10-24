@@ -15,3 +15,6 @@ export const USE_LIVE_LLM = process.env.USE_LIVE_LLM === 'true';
 export const ML_SERVICE_URL = process.env.ML_SERVICE_URL || 'http://localhost:8001';
 
 export const JWT_SECRET = process.env.JWT_SECRET || 'dev_secret';
+
+export const MONGODB_URI =
+  process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/triage-horizon';
