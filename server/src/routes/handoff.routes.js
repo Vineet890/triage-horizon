@@ -2,9 +2,20 @@ import express from 'express';
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import Patient from '../models/Patient.js';
 import { authenticate, requireRole } from '../middleware/auth.js';
-import { emitToAll, getIO } from '../socket.js';
+import { loadPatientProfile } from '../services/patientProfile.js';
+import { findUserById } from '../services/userStore.js';
+import {
+  findActiveByPatient,
+  findLatestByPatient,
+  getEncounter,
+} from '../services/encounterStore.js';
+import { prescribeEncounter } from '../services/encounterService.js';
+import {
+  emitEncounterUpdated,
+  emitToPatient,
+  getIO,
+} from '../socket.js';
 
 const router = express.Router();
 
@@ -39,20 +50,26 @@ function readJson(filePath) {
   return JSON.parse(fs.readFileSync(filePath, 'utf-8'));
 }
 
-// POST /api/handoff/prescription - DOCTOR only
+/**
+ * POST /api/handoff/prescription - DOCTOR only
+ *
+ * Legacy alias retained for the physician workspace. When the patient has a
+ * shared encounter (the normal path) the prescription is written to that
+ * encounter and the full closed loop runs. When no encounter exists the old
+ * targeted notification is still delivered so nothing regresses.
+ */
 router.post(
   '/prescription',
   authenticate,
   requireRole(['DOCTOR']),
-  (req, res) => {
-    const { patient_id, medications, instructions } = req.body ?? {};
-
-    if (!patient_id || typeof patient_id !== 'string') {
-      return res.status(400).json({ error: 'patient_id is required' });
-    }
+  async (req, res) => {
+    const { patient_id, encounter_id, medications, instructions } =
+      req.body ?? {};
 
     if (!Array.isArray(medications) || medications.length === 0) {
-      return res.status(400).json({ error: 'medications must be a non-empty array' });
+      return res
+        .status(400)
+        .json({ error: 'medications must be a non-empty array' });
     }
 
     if (instructions !== undefined && typeof instructions !== 'string') {
@@ -61,7 +78,69 @@ router.post(
         .json({ error: 'instructions must be a string when provided' });
     }
 
-    const prescriptionId = `RX-${crypto.randomBytes(4).toString('hex').toUpperCase()}`;
+    const encounter = encounter_id
+      ? await getEncounter(encounter_id)
+      : patient_id
+        ? await findActiveByPatient(patient_id)
+        : null;
+
+    if (encounter) {
+      if (patient_id && encounter.patient_id !== patient_id) {
+        return res
+          .status(409)
+          .json({ error: 'The encounter does not belong to this patient.' });
+      }
+
+      const account = await findUserById(req.user.userId);
+      const result = await prescribeEncounter({
+        encounterId: encounter.id,
+        doctorId: req.user.userId,
+        doctorName: account?.name || 'Attending clinician',
+        medications,
+        instructions: instructions ?? '',
+      });
+
+      if (result.error) {
+        return res
+          .status(result.statusCode ?? 400)
+          .json({ error: result.error });
+      }
+
+      const io = getIO();
+      if (io) {
+        emitToPatient(io, result.encounter.patient_id, 'PRESCRIPTION_SENT', {
+          encounter_id: result.encounter.id,
+          patient_id: result.encounter.patient_id,
+          prescription_id: result.prescription.prescription_id,
+          prescription: result.prescription,
+          medications: result.prescription.medications,
+          instructions: result.prescription.instructions,
+          doctor_id: result.prescription.doctor_id,
+          doctor_name: result.prescription.doctor_name,
+          sent_at: result.prescription.sent_at,
+        });
+        emitEncounterUpdated(io, result.encounter);
+      }
+
+      return res.status(200).json({
+        success: true,
+        encounter_id: result.encounter.id,
+        prescription_id: result.prescription.prescription_id,
+        prescription: result.prescription,
+        encounter: result.encounter,
+      });
+    }
+
+    if (!patient_id || typeof patient_id !== 'string') {
+      return res.status(400).json({
+        error: 'patient_id or encounter_id is required',
+      });
+    }
+
+    const prescriptionId = `RX-${crypto
+      .randomBytes(4)
+      .toString('hex')
+      .toUpperCase()}`;
 
     const payload = {
       prescription_id: prescriptionId,
@@ -71,16 +150,18 @@ router.post(
       doctor_id: req.user.userId,
       sent_at: new Date().toISOString(),
       target_portal: 'PATIENT_PORTAL',
+      legacy: true,
     };
 
     const io = getIO();
     if (io) {
-      emitToAll(io, 'PRESCRIPTION_SENT', payload);
+      emitToPatient(io, patient_id, 'PRESCRIPTION_SENT', payload);
     }
 
     return res.status(200).json({
       prescription_id: prescriptionId,
       success: true,
+      legacy: true,
     });
   }
 );
@@ -92,8 +173,7 @@ router.get(
   requireRole(['DOCTOR', 'ADMIN']),
   async (req, res) => {
     try {
-      // Base patient records live in MongoDB; the handoff overlay stays mock.
-      const patient = await Patient.findOne({ id: req.params.patientId }).lean();
+      const patient = await loadPatientProfile(req.params.patientId);
 
       if (!patient) {
         return res
@@ -101,16 +181,39 @@ router.get(
           .json({ error: `Unknown patient '${req.params.patientId}'` });
       }
 
+      // Prefer the shared encounter over the demo fixture: it is the source of
+      // truth for acuity, routing, risk modifiers and the prescription.
+      const encounter =
+        (await findActiveByPatient(patient.id)) ??
+        (await findLatestByPatient(patient.id));
+
       const demoResponses = readJson(DEMO_RESPONSES_PATH);
-      const decision = demoResponses[patient.id] ?? null;
-      const acuity = decision?.acuity ?? 'LOW';
+      const fixture = demoResponses[patient.id] ?? null;
+
+      const acuity = encounter?.acuity ?? fixture?.acuity ?? 'LOW';
+      const symptom = encounter?.symptom ?? fixture?.symptom ?? null;
 
       const handoff = {
-        symptoms: decision?.symptom ? [decision.symptom] : patient.conditions,
-        protocol_matched: decision?.protocol_matched ?? 'GEN-000: General Triage Protocol',
+        encounter_id: encounter?.id ?? null,
+        encounter: encounter ?? null,
+        status: encounter?.status ?? null,
+        care_tier: encounter?.care_tier ?? fixture?.care_tier ?? null,
+        symptoms: symptom ? [symptom] : patient.conditions,
+        protocol_matched:
+          encounter?.protocol_matched ??
+          fixture?.protocol_matched ??
+          'GEN-000: General Triage Protocol',
         acuity,
-        special_flags: decision?.special_flags ?? [],
-        recommended_actions: RECOMMENDED_ACTIONS[acuity] ?? RECOMMENDED_ACTIONS.LOW,
+        special_flags: encounter?.special_flags ?? fixture?.special_flags ?? [],
+        risk_modifiers: encounter?.risk_modifiers ?? [],
+        agent_rationale: encounter?.agent_rationale ?? [],
+        agent_trace: encounter?.agent_trace ?? [],
+        timeline: encounter?.timeline ?? [],
+        assigned_doctor_id: encounter?.assigned_doctor_id ?? null,
+        assigned_doctor_name: encounter?.assigned_doctor_name ?? null,
+        prescription: encounter?.prescription ?? null,
+        recommended_actions:
+          RECOMMENDED_ACTIONS[acuity] ?? RECOMMENDED_ACTIONS.LOW,
         generated_at: new Date().toISOString(),
       };
 

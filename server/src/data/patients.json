@@ -9,6 +9,11 @@
     "allergies": ["penicillin"],
     "conditions": ["mild persistent asthma"],
     "medications": ["albuterol 100 mcg inhaler (as needed)"],
+    "adherence": {
+      "last_7_days_pct": 86,
+      "missed_doses_7d": 1,
+      "last_refill_days": 18
+    },
     "previous_visits": [
       {
         "date": "2026-02-14",
@@ -54,6 +59,11 @@
       "amlodipine 5 mg once daily",
       "warfarin 5 mg once daily (INR target 2.0-3.0)"
     ],
+    "adherence": {
+      "last_7_days_pct": 78,
+      "missed_doses_7d": 2,
+      "last_refill_days": 12
+    },
     "previous_visits": [
       {
         "date": "2026-10-10",

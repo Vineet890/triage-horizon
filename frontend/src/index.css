@@ -1,0 +1,506 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: light;
+
+    /* Core surfaces. RGB triplets let Tailwind apply opacity modifiers. */
+    --canvas: 246 244 238;
+    --surface: 255 253 248;
+    --surface-muted: 240 237 228;
+    --surface-strong: 233 229 218;
+    --border: 221 216 204;
+    --border-strong: 201 194 178;
+
+    /* Text */
+    --ink: 17 32 28;
+    --ink-secondary: 77 90 84;
+    --ink-muted: 94 106 99;
+    --ink-faint: 124 135 127;
+
+    /* Brand */
+    --brand-rgb: 13 148 136;
+    --brand: rgb(var(--brand-rgb));
+    --brand-strong: #0f766e;
+    --brand-soft: #e6f4f1;
+    --brand-border: #c8e6df;
+    --brand-solid: #0f766e;
+    --brand-solid-hover: #115e59;
+    --on-brand: #ffffff;
+
+    /* Deep forest chrome: sidebar, header, brand mark */
+    --forest: #0b1b18;
+    --forest-2: #10241f;
+    --forest-ink: #f3f7f5;
+    --forest-muted: #a9bdb6;
+    --forest-faint: #7e958e;
+    --forest-border: #1e352e;
+    --forest-active: #143a33;
+    --forest-accent: #5eead4;
+    --mark-bg: #0b1b18;
+    --mark-ink: #5eead4;
+
+    /* Encounter rail: complete = green, active = teal, pending = gray */
+    --rail-complete: #16a34a;
+    --rail-active: #0d9488;
+    --rail-pending: #6b766f;
+    --rail-line: #e2ddd1;
+
+    /* Semantic signals */
+    --amber: #ca8a04;
+    --amber-ink: #854d0e;
+    --amber-soft: #fdf6e3;
+    --amber-border: #ecd9a4;
+    --high: #ea580c;
+    --high-ink: #9a3412;
+    --high-soft: #fff3e8;
+    --high-border: #f4cfae;
+    --danger: #dc2626;
+    --danger-ink: #b91c1c;
+    --danger-soft: #fdf0ee;
+    --danger-border: #f0c5c1;
+    --danger-solid: #b91c1c;
+    --danger-solid-hover: #991b1b;
+    --success: #16a34a;
+    --success-ink: #15803d;
+    --success-soft: #edf8f0;
+    --success-border: #b9e3c5;
+
+    /* Data visualisation */
+    --chart-grid: #e2ddd1;
+    --chart-axis: #6b766f;
+  }
+
+  .dark {
+    color-scheme: dark;
+
+    --canvas: 9 18 15;
+    --surface: 15 28 24;
+    --surface-muted: 11 22 19;
+    --surface-strong: 23 39 32;
+    --border: 36 56 47;
+    --border-strong: 51 76 65;
+
+    --ink: 237 243 239;
+    --ink-secondary: 195 208 201;
+    --ink-muted: 157 176 167;
+    --ink-faint: 126 147 138;
+
+    --brand-rgb: 45 212 191;
+    --brand: rgb(var(--brand-rgb));
+    --brand-strong: #5eead4;
+    --brand-soft: #0e2e28;
+    --brand-border: #1b4a40;
+    --brand-solid: #0f766e;
+    --brand-solid-hover: #115e59;
+    --on-brand: #ffffff;
+
+    --forest: #060e0c;
+    --forest-2: #0b1b18;
+    --forest-ink: #f3f7f5;
+    --forest-muted: #a9bdb6;
+    --forest-faint: #7e958e;
+    --forest-border: #1b3029;
+    --forest-active: #123a33;
+    --forest-accent: #5eead4;
+    --mark-bg: #0b1b18;
+    --mark-ink: #5eead4;
+
+    --rail-complete: #22c55e;
+    --rail-active: #14b8a6;
+    --rail-pending: #8fa69f;
+    --rail-line: #24382f;
+
+    --amber: #fbbf24;
+    --amber-ink: #fde68a;
+    --amber-soft: #3a2708;
+    --amber-border: #6b4a0e;
+    --high: #fb923c;
+    --high-ink: #fdba74;
+    --high-soft: #3a1c08;
+    --high-border: #6e3510;
+    --danger: #f87171;
+    --danger-ink: #fca5a5;
+    --danger-soft: #3a1212;
+    --danger-border: #6e2020;
+    --danger-solid: #b91c1c;
+    --danger-solid-hover: #991b1b;
+    --success: #4ade80;
+    --success-ink: #86efac;
+    --success-soft: #0a2a16;
+    --success-border: #1e5a34;
+
+    --chart-grid: #24382f;
+    --chart-axis: #9db0a7;
+  }
+
+  /* Public marketing and authentication surfaces stay on warm paper even when
+     the saved portal preference is dark. */
+  .marketing {
+    color-scheme: light;
+
+    --canvas: 246 244 238;
+    --surface: 255 253 248;
+    --surface-muted: 239 235 226;
+    --surface-strong: 233 228 217;
+    --border: 221 216 204;
+    --border-strong: 207 200 184;
+
+    --ink: 17 32 28;
+    --ink-secondary: 77 90 84;
+    --ink-muted: 107 118 111;
+    --ink-faint: 154 159 149;
+
+    --brand-rgb: 13 148 136;
+    --brand: #0d9488;
+    --brand-strong: #0f766e;
+    --brand-soft: #e6f4f1;
+    --brand-border: #c8e6df;
+    --brand-solid: #0f766e;
+    --brand-solid-hover: #115e59;
+    --on-brand: #ffffff;
+
+    background-color: rgb(var(--canvas));
+    color: rgb(var(--ink));
+  }
+
+  html {
+    background-color: rgb(var(--canvas));
+    scroll-behavior: smooth;
+  }
+
+  body {
+    margin: 0;
+    min-width: 320px;
+    min-height: 100vh;
+    background-color: rgb(var(--canvas));
+    color: rgb(var(--ink));
+    font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  input,
+  select,
+  textarea,
+  button {
+    font-family: inherit;
+    font-size: inherit;
+  }
+
+  button {
+    cursor: pointer;
+  }
+
+  button:disabled {
+    cursor: not-allowed;
+  }
+
+  small {
+    font-size: 14px;
+  }
+
+  ::selection {
+    background-color: color-mix(in srgb, var(--brand) 24%, transparent);
+    color: rgb(var(--ink));
+  }
+
+  *:focus-visible {
+    outline: 2px solid var(--brand);
+    outline-offset: 2px;
+  }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    border-radius: 6px;
+    background: var(--border-strong);
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--ink-muted);
+  }
+}
+
+@layer components {
+  .th-eyebrow {
+    @apply font-mono text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-muted;
+  }
+
+  .th-panel {
+    @apply rounded-[6px] border border-border bg-surface;
+  }
+
+  .th-panel-muted {
+    @apply rounded-[6px] border border-border bg-surface-muted;
+  }
+
+  .th-input {
+    @apply h-10 w-full rounded-[6px] border border-border bg-surface px-3 text-sm text-ink placeholder:text-ink-faint transition-colors duration-200 focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20;
+  }
+
+  .th-btn {
+    @apply inline-flex h-9 items-center justify-center gap-2 rounded-[6px] border px-3 text-sm font-medium transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-brand/25 disabled:cursor-not-allowed disabled:opacity-60;
+  }
+
+  .th-btn-primary {
+    @apply border-brand-solid bg-brand-solid text-white hover:bg-brand-solid-hover;
+  }
+
+  .th-btn-secondary {
+    @apply border-border-strong bg-surface text-ink hover:bg-surface-muted;
+  }
+
+  .th-btn-ghost {
+    @apply border-transparent text-ink-secondary hover:bg-surface-muted hover:text-ink;
+  }
+
+  .th-forest-btn {
+    @apply border-forest-border bg-white/5 text-forest-ink hover:bg-white/10;
+  }
+}
+
+@layer utilities {
+  .text-pretty {
+    text-wrap: pretty;
+  }
+
+  .th-tabular {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* -------------------------------------------------------------------------
+   Public site — paper grid, forest grid and auth atmosphere
+   ------------------------------------------------------------------------- */
+.th-paper-grid {
+  background-image:
+    linear-gradient(to right, rgba(17, 32, 28, 0.045) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(17, 32, 28, 0.045) 1px, transparent 1px);
+  background-size: 64px 64px;
+}
+
+.th-forest-grid {
+  background-image:
+    linear-gradient(to right, rgba(232, 239, 236, 0.055) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(232, 239, 236, 0.055) 1px, transparent 1px);
+  background-size: 56px 56px;
+}
+
+.th-auth-surface {
+  background:
+    radial-gradient(
+      ellipse 58% 52% at 16% 14%,
+      rgba(13, 148, 136, 0.24),
+      transparent 66%
+    ),
+    radial-gradient(
+      ellipse 48% 44% at 82% 84%,
+      rgba(13, 148, 136, 0.12),
+      transparent 70%
+    ),
+    #081512;
+}
+
+.th-route-dash {
+  stroke-dasharray: 5 7;
+  animation: th-route-dash 1.35s linear infinite;
+}
+
+@keyframes th-route-dash {
+  to {
+    stroke-dashoffset: -24;
+  }
+}
+
+/* -------------------------------------------------------------------------
+   Leaflet — admin command map
+   ------------------------------------------------------------------------- */
+/* Esri Dark Gray runs out of native tiles at z16. From z17 upward the map
+   switches to OSM for real street detail; the filter folds it into the same
+   command-centre palette so the layer change is visually seamless. */
+.th-map-osm-dark {
+  filter: invert(1) hue-rotate(180deg) brightness(0.9) contrast(1.05)
+    saturate(0.6);
+}
+
+.th-map-osm-light {
+  filter: sepia(0.16) saturate(0.72) contrast(0.96) brightness(1.02);
+}
+
+.th-map-dark.leaflet-container {
+  background: #08120f;
+  color: rgb(var(--ink));
+  font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
+  outline: none;
+}
+
+.th-map-light.leaflet-container {
+  background: #e9e5da;
+  color: rgb(var(--ink));
+  font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
+  outline: none;
+}
+
+.th-map-dark .leaflet-control-container .leaflet-control,
+.th-map-light .leaflet-control-container .leaflet-control {
+  box-shadow: none;
+}
+
+.th-map-dark .leaflet-bar,
+.th-map-light .leaflet-bar {
+  overflow: hidden;
+  border: 1px solid rgb(var(--border));
+  border-radius: 6px;
+  box-shadow: none;
+}
+
+.th-map-dark .leaflet-bar a,
+.th-map-dark .leaflet-bar a:hover,
+.th-map-light .leaflet-bar a,
+.th-map-light .leaflet-bar a:hover {
+  width: 30px;
+  height: 30px;
+  line-height: 30px;
+  border-bottom: 1px solid rgb(var(--border));
+  background: rgb(var(--surface));
+  color: rgb(var(--ink));
+}
+
+.th-map-dark .leaflet-bar a:last-child,
+.th-map-light .leaflet-bar a:last-child {
+  border-bottom: 0;
+}
+
+.th-map-dark .leaflet-bar a:hover,
+.th-map-light .leaflet-bar a:hover {
+  background: rgb(var(--surface-strong));
+  color: rgb(var(--ink));
+}
+
+.th-map-dark .leaflet-bar a.leaflet-disabled,
+.th-map-light .leaflet-bar a.leaflet-disabled {
+  background: rgb(var(--surface-muted));
+  color: rgb(var(--ink-faint));
+}
+
+.th-map-dark .leaflet-control-attribution,
+.th-map-light .leaflet-control-attribution {
+  margin: 0 6px 6px 0;
+  padding: 2px 6px;
+  border: 1px solid rgb(var(--border));
+  border-radius: 6px;
+  background: rgb(var(--surface) / 0.86);
+  color: rgb(var(--ink-muted));
+  font-size: 10px;
+  backdrop-filter: blur(4px);
+}
+
+.th-map-dark .leaflet-control-attribution a,
+.th-map-light .leaflet-control-attribution a {
+  color: var(--brand-strong);
+}
+
+.th-map-dark .leaflet-tooltip,
+.th-map-light .leaflet-tooltip {
+  padding: 6px 8px;
+  border: 1px solid rgb(var(--border));
+  border-radius: 6px;
+  background: rgb(var(--surface));
+  box-shadow: none;
+  color: rgb(var(--ink));
+  font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
+}
+
+.th-map-dark .leaflet-tooltip-top::before,
+.th-map-light .leaflet-tooltip-top::before {
+  border-top-color: rgb(var(--border));
+}
+
+.th-map-dark .leaflet-tooltip-bottom::before,
+.th-map-light .leaflet-tooltip-bottom::before {
+  border-bottom-color: rgb(var(--border));
+}
+
+.th-map-dark .leaflet-tooltip-left::before,
+.th-map-light .leaflet-tooltip-left::before {
+  border-left-color: rgb(var(--border));
+}
+
+.th-map-dark .leaflet-tooltip-right::before,
+.th-map-light .leaflet-tooltip-right::before {
+  border-right-color: rgb(var(--border));
+}
+
+.th-map-tooltip-title {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.th-map-tooltip-meta {
+  display: block;
+  margin-top: 2px;
+  color: rgb(var(--ink-muted));
+  font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
+  font-size: 10px;
+}
+
+@keyframes th-marker-pulse {
+  0%,
+  100% {
+    stroke-opacity: 1;
+    stroke-width: 2;
+  }
+
+  50% {
+    stroke-opacity: 0.35;
+    stroke-width: 9;
+  }
+}
+
+.th-marker-pulse {
+  animation: th-marker-pulse 1.8s ease-in-out infinite;
+}
+
+@keyframes th-legend-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.35;
+  }
+}
+
+.th-map-legend-pulse {
+  animation: th-legend-pulse 1.8s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  .th-marker-pulse,
+  .th-map-legend-pulse,
+  .th-route-dash {
+    animation: none;
+  }
+}

@@ -12,6 +12,7 @@ import triageRoutes from './routes/triage.routes.js';
 import videoRoutes from './routes/video.routes.js';
 import handoffRoutes from './routes/handoff.routes.js';
 import analyticsRoutes from './routes/analytics.routes.js';
+import encountersRoutes from './routes/encounters.routes.js';
 
 const app = express();
 
@@ -35,6 +36,7 @@ app.get('/health', (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/facilities', facilitiesRoutes);
 app.use('/api/triage', triageRoutes);
+app.use('/api/encounters', encountersRoutes);
 app.use('/api/video', videoRoutes);
 app.use('/api/handoff', handoffRoutes);
 app.use('/api/analytics', analyticsRoutes);
@@ -44,17 +46,17 @@ app.use((req, res) => {
 });
 
 /**
- * Connects to MongoDB before accepting traffic. A failed connection aborts
- * startup instead of serving requests against a half-initialised store.
+ * Connects to MongoDB before accepting traffic. When the cluster is
+ * unreachable the server still starts in degraded demo mode: facilities come
+ * from the seeded in-memory state and patient handoffs from demo data.
  */
 async function startServer() {
   try {
     await connectDB();
   } catch {
-    console.error(
-      '[server] Startup aborted. Start MongoDB or update MONGODB_URI in server/.env.'
+    console.warn(
+      '[server] MongoDB unavailable. Starting in degraded demo mode with file-backed data.'
     );
-    process.exit(1);
   }
 
   httpServer.listen(PORT, () => {

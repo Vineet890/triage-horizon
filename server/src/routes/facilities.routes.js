@@ -1,5 +1,6 @@
 import express from 'express';
 import Facility from '../models/Facility.js';
+import { isDatabaseConnected } from '../config/db.js';
 import facilityStateManager from '../services/facilityStateManager.js';
 import { rerouteAffectedPatients } from '../services/rerouteService.js';
 import { authenticate, requireRole } from '../middleware/auth.js';
@@ -38,6 +39,13 @@ function withLiveState(record) {
 
 // GET /api/facilities - all facilities (persisted base records + live state)
 router.get('/', async (req, res) => {
+  // Serve the seeded in-memory state immediately when MongoDB is unavailable.
+  // This keeps the command centre usable in demo mode instead of stalling on
+  // the driver's server-selection timeout.
+  if (!isDatabaseConnected()) {
+    return res.status(200).json(facilityStateManager.getAllStates());
+  }
+
   try {
     const facilities = await Facility.find().lean();
     return res.status(200).json(facilities.map(withLiveState));
@@ -55,7 +63,7 @@ router.post(
   '/simulate-shock',
   authenticate,
   requireRole(['ADMIN']),
-  (req, res) => {
+  async (req, res) => {
     const { facility_id } = req.body ?? {};
 
     if (!facility_id || typeof facility_id !== 'string') {
@@ -68,16 +76,26 @@ router.post(
       return res.status(404).json({ error: `Unknown facility '${facility_id}'` });
     }
 
-    // Rule 7: rerouting is invoked explicitly after the state change.
-    const rerouted = rerouteAffectedPatients(facility_id, getIO());
+    try {
+      // Rule 7: rerouting is invoked explicitly after the state change and
+      // must complete before the response so the client receives the full
+      // list of reassigned encounters.
+      const rerouted = await rerouteAffectedPatients(facility_id, getIO());
 
-    return res.status(200).json({
-      success: true,
-      facility_id,
-      facility,
-      rerouted_routes: rerouted.length,
-      rerouted,
-    });
+      return res.status(200).json({
+        success: true,
+        facility_id,
+        facility,
+        rerouted_routes: rerouted.length,
+        rerouted,
+      });
+    } catch (error) {
+      console.error('[facilities] reroute failed after shock:', error);
+      return res.status(500).json({
+        error: 'Facility state changed but rerouting failed.',
+        facility,
+      });
+    }
   }
 );
 

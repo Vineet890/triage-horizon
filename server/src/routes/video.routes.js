@@ -1,29 +1,31 @@
 import express from 'express';
 import { authenticate } from '../middleware/auth.js';
-import { emitToAll, getIO } from '../socket.js';
+import { emitToPatient, emitToRole, getIO } from '../socket.js';
 
 const router = express.Router();
 
 const ACUITY_VALUES = ['CRITICAL', 'HIGH', 'MODERATE', 'LOW'];
 const JITSI_DOMAIN = 'meet.jit.si';
+const ROOM_PREFIX = 'TH-ROOM-';
 
 // Every video endpoint requires a valid JWT.
 router.use(authenticate);
 
-function emitToPortal(portal, event, payload) {
-  const io = getIO();
-
-  if (!io) {
-    return false;
+/** Derives the patient id from the deterministic room name. */
+function patientIdFromRoom(roomId) {
+  if (typeof roomId !== 'string' || !roomId.startsWith(ROOM_PREFIX)) {
+    return null;
   }
 
-  emitToAll(io, event, {
-    ...payload,
-    target_portal: portal,
-    emitted_at: new Date().toISOString(),
-  });
+  const value = roomId.slice(ROOM_PREFIX.length).trim();
+  return value || null;
+}
 
-  return true;
+function stamp(payload) {
+  return {
+    ...payload,
+    emitted_at: new Date().toISOString(),
+  };
 }
 
 // POST /api/video/create-room
@@ -41,16 +43,30 @@ router.post('/create-room', (req, res) => {
     });
   }
 
-  const room_id = `TH-ROOM-${patient_id}`;
+  // A patient may only open a room for themselves.
+  if (req.user.role === 'PATIENT' && req.user.userId !== patient_id) {
+    return res.status(403).json({ error: 'Not authorised for this patient' });
+  }
 
-  emitToPortal('DOCTOR_PORTAL', 'VIDEO_CALL_INITIATED', {
-    room_id,
-    patient_id,
-    patient_name: patient_name ?? null,
-    acuity: acuity ?? null,
-    jitsi_url: `https://${JITSI_DOMAIN}/${room_id}`,
-    initiated_by: req.user.userId,
-  });
+  const room_id = `${ROOM_PREFIX}${patient_id}`;
+
+  const io = getIO();
+  if (io) {
+    emitToRole(
+      io,
+      'DOCTOR',
+      'VIDEO_CALL_INITIATED',
+      stamp({
+        room_id,
+        patient_id,
+        patient_name: patient_name ?? null,
+        acuity: acuity ?? null,
+        jitsi_url: `https://${JITSI_DOMAIN}/${room_id}`,
+        initiated_by: req.user.userId,
+        target_portal: 'DOCTOR_PORTAL',
+      })
+    );
+  }
 
   return res.status(200).json({ room_id });
 });
@@ -63,12 +79,26 @@ router.post('/accept', (req, res) => {
     return res.status(400).json({ error: 'room_id is required' });
   }
 
-  emitToPortal('PATIENT_PORTAL', 'VIDEO_CALL_ACCEPTED', {
-    room_id,
-    doctor_name: doctor_name ?? null,
-    specialty: specialty ?? null,
-    accepted_by: req.user.userId,
-  });
+  const patientId = patientIdFromRoom(room_id);
+
+  if (!patientId) {
+    return res.status(400).json({ error: 'Unrecognised room_id' });
+  }
+
+  const io = getIO();
+  if (io) {
+    const payload = stamp({
+      room_id,
+      patient_id: patientId,
+      doctor_name: doctor_name ?? null,
+      specialty: specialty ?? null,
+      accepted_by: req.user.userId,
+      target_portal: 'PATIENT_PORTAL',
+    });
+
+    emitToPatient(io, patientId, 'VIDEO_CALL_ACCEPTED', payload);
+    emitToRole(io, 'DOCTOR', 'VIDEO_CALL_ACCEPTED', payload);
+  }
 
   return res.status(200).json({ success: true });
 });
@@ -81,19 +111,23 @@ router.post('/end', (req, res) => {
     return res.status(400).json({ error: 'room_id is required' });
   }
 
-  const payload = {
+  const patientId = patientIdFromRoom(room_id);
+  const payload = stamp({
     room_id,
+    patient_id: patientId,
     duration_sec: Number(duration_sec) || 0,
     prescription_sent: Boolean(prescription_sent),
     ended_by: req.user.userId,
     target_portal: 'BOTH_PORTALS',
     ended_at: new Date().toISOString(),
-  };
+  });
 
-  // A single broadcast reaches both the doctor and patient portals.
   const io = getIO();
   if (io) {
-    emitToAll(io, 'VIDEO_CALL_ENDED', payload);
+    if (patientId) {
+      emitToPatient(io, patientId, 'VIDEO_CALL_ENDED', payload);
+    }
+    emitToRole(io, 'DOCTOR', 'VIDEO_CALL_ENDED', payload);
   }
 
   return res.status(200).json({ success: true });

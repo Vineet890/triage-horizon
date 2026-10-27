@@ -90,7 +90,14 @@ class FacilityStateManager {
       return false;
     }
 
-    this.io.emit(event, payload);
+    // Operational state is relevant to every authenticated portal, but it must
+    // never leak to unauthenticated sockets.
+    this.io
+      .to('role:PATIENT')
+      .to('role:DOCTOR')
+      .to('role:ADMIN')
+      .emit(event, payload);
+
     return true;
   }
 }

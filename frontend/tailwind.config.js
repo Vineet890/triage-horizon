@@ -1,0 +1,83 @@
+/** @type {import('tailwindcss').Config} */
+export default {
+  content: ['./index.html', './src/**/*.{js,jsx,ts,tsx}'],
+  darkMode: 'class',
+  theme: {
+    extend: {
+      fontFamily: {
+        sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        mono: ['"JetBrains Mono"', 'ui-monospace', 'SFMono-Regular', 'monospace'],
+      },
+      colors: {
+        canvas: 'rgb(var(--canvas) / <alpha-value>)',
+        surface: {
+          DEFAULT: 'rgb(var(--surface) / <alpha-value>)',
+          muted: 'rgb(var(--surface-muted) / <alpha-value>)',
+          strong: 'rgb(var(--surface-strong) / <alpha-value>)',
+        },
+        border: {
+          DEFAULT: 'rgb(var(--border) / <alpha-value>)',
+          strong: 'rgb(var(--border-strong) / <alpha-value>)',
+        },
+        ink: {
+          DEFAULT: 'rgb(var(--ink) / <alpha-value>)',
+          secondary: 'rgb(var(--ink-secondary) / <alpha-value>)',
+          muted: 'rgb(var(--ink-muted) / <alpha-value>)',
+          faint: 'rgb(var(--ink-faint) / <alpha-value>)',
+        },
+        accent: 'rgb(var(--brand-rgb) / <alpha-value>)',
+        brand: {
+          DEFAULT: 'rgb(var(--brand-rgb) / <alpha-value>)',
+          strong: 'var(--brand-strong)',
+          soft: 'var(--brand-soft)',
+          border: 'var(--brand-border)',
+          solid: 'var(--brand-solid)',
+          'solid-hover': 'var(--brand-solid-hover)',
+        },
+        forest: {
+          DEFAULT: 'var(--forest)',
+          2: 'var(--forest-2)',
+          ink: 'var(--forest-ink)',
+          muted: 'var(--forest-muted)',
+          faint: 'var(--forest-faint)',
+          border: 'var(--forest-border)',
+          active: 'var(--forest-active)',
+          accent: 'var(--forest-accent)',
+        },
+        rail: {
+          complete: 'var(--rail-complete)',
+          active: 'var(--rail-active)',
+          pending: 'var(--rail-pending)',
+          line: 'var(--rail-line)',
+        },
+        signal: {
+          amber: 'var(--amber)',
+          'amber-ink': 'var(--amber-ink)',
+          'amber-soft': 'var(--amber-soft)',
+          'amber-border': 'var(--amber-border)',
+          high: 'var(--high)',
+          'high-ink': 'var(--high-ink)',
+          'high-soft': 'var(--high-soft)',
+          'high-border': 'var(--high-border)',
+          danger: 'var(--danger)',
+          'danger-ink': 'var(--danger-ink)',
+          'danger-soft': 'var(--danger-soft)',
+          'danger-border': 'var(--danger-border)',
+          'danger-solid': 'var(--danger-solid)',
+          'danger-solid-hover': 'var(--danger-solid-hover)',
+          success: 'var(--success)',
+          'success-ink': 'var(--success-ink)',
+          'success-soft': 'var(--success-soft)',
+          'success-border': 'var(--success-border)',
+        },
+        triage: {
+          critical: '#DC2626',
+          high: '#EA580C',
+          moderate: '#CA8A04',
+          low: '#16A34A',
+        },
+      },
+    },
+  },
+  plugins: [],
+};

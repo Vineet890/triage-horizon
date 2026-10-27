@@ -4,9 +4,13 @@ import { MONGODB_URI } from '../config.js';
 /**
  * Opens the MongoDB connection.
  *
- * Throws when the server is unreachable so callers can abort startup instead
- * of serving traffic against a half-initialised database.
+ * Throws when the server is unreachable. Callers decide whether to abort or
+ * continue in degraded demo mode with file-backed data.
  */
+export function isDatabaseConnected() {
+  return mongoose.connection.readyState === 1;
+}
+
 export async function connectDB() {
   try {
     mongoose.set('strictQuery', true);

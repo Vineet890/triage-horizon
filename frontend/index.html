@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#0B1B18" />
+    <meta
+      name="description"
+      content="Triage Horizon — clinical triage and routing for patients, physicians and network administrators."
+    />
+    <title>Triage Horizon | Clinical Triage Network</title>
+    <script>
+      // Apply the saved theme before first paint to avoid a light flash.
+      (function () {
+        try {
+          var theme = localStorage.getItem('triage-horizon.theme.v1');
+          if (theme === 'dark') document.documentElement.classList.add('dark');
+        } catch (error) {
+          // Storage can be unavailable in private browsing modes.
+        }
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
