@@ -60,9 +60,14 @@ export default function PatientRouteStatus({
   }, [patientId, encounter?.id]);
 
   const activeRoute = liveRoute ?? routeUpdate ?? null;
-  const facility = liveRoute?.selected_facility ?? destination ?? null;
-  const facilityName = facility?.name ?? encounter?.facility_name ?? null;
-  const resolvedEta = facility?.eta_min ?? eta ?? null;
+  const rerouteFailed = activeRoute?.reroute_status === 'NO_ALTERNATIVE_AVAILABLE';
+  const facility = rerouteFailed
+    ? null
+    : liveRoute?.selected_facility ?? destination ?? null;
+  const facilityName = rerouteFailed
+    ? 'Manual care coordination'
+    : facility?.name ?? encounter?.facility_name ?? null;
+  const resolvedEta = rerouteFailed ? null : facility?.eta_min ?? eta ?? null;
   const resolvedTier = liveRoute?.care_tier ?? careTier ?? encounter?.care_tier ?? null;
   const rerouted = Boolean(
     activeRoute?.previous_facility_id ||
@@ -102,7 +107,7 @@ export default function PatientRouteStatus({
               transition={{ duration: 0.2 }}
               className="shrink-0 rounded-[4px] border border-signal-amber-border bg-signal-amber-soft px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-signal-amber-ink"
             >
-              Rerouted
+              {rerouteFailed ? 'Manual coordination' : 'Rerouted'}
             </motion.span>
           )}
         </AnimatePresence>
@@ -138,9 +143,11 @@ export default function PatientRouteStatus({
           </AnimatePresence>
 
           <p className="mt-0.5 text-xs leading-5 text-ink-muted">
-            {rerouted
-              ? 'Your care team reassigned you automatically after a facility update.'
-              : 'Confirmed by the routing agent and reviewed by your clinician.'}
+            {rerouteFailed
+              ? 'No alternative facility is available automatically. Your care team will coordinate the next step with you.'
+              : rerouted
+                ? 'Your care team reassigned you automatically after a facility update.'
+                : 'Confirmed by the routing agent and reviewed by your clinician.'}
           </p>
         </div>
       </div>

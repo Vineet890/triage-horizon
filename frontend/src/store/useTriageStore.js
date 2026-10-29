@@ -19,7 +19,10 @@ function mergeRoute(entry, payload) {
 
   return {
     ...entry,
-    selected_facility: payload.selected_facility ?? entry.selected_facility,
+    selected_facility:
+      payload.selected_facility !== undefined
+        ? payload.selected_facility
+        : entry.selected_facility,
     route_update: payload,
     rerouted_at: payload.rerouted_at,
     reroute_status: payload.reroute_status,
@@ -108,7 +111,10 @@ function mergeTriageResult(result, encounter) {
     status: encounter.status,
     acuity: encounter.acuity ?? result.acuity,
     care_tier: encounter.care_tier ?? result.care_tier,
-    selected_facility: encounter.selected_facility ?? result.selected_facility,
+    selected_facility:
+      encounter.selected_facility !== undefined
+        ? encounter.selected_facility
+        : result.selected_facility,
     assigned_doctor_id: encounter.assigned_doctor_id ?? null,
     assigned_doctor_name: encounter.assigned_doctor_name ?? null,
     prescription: encounter.prescription ?? result.prescription ?? null,
@@ -339,7 +345,9 @@ export const useTriageStore = create((set, get) => ({
           {
             ...triageResult,
             selected_facility:
-              payload.selected_facility ?? triageResult.selected_facility,
+              payload.selected_facility !== undefined
+                ? payload.selected_facility
+                : triageResult.selected_facility,
             route_update: payload,
           },
           updatedEncounter
@@ -360,7 +368,10 @@ export const useTriageStore = create((set, get) => ({
           id: `${payload.patient_id}-${payload.rerouted_at ?? Date.now()}`,
           patient_id: payload.patient_id,
           facility_name:
-            payload.selected_facility?.name ?? 'an alternate facility',
+            payload.selected_facility?.name ??
+            (payload.reroute_status === 'NO_ALTERNATIVE_AVAILABLE'
+              ? 'manual care coordination'
+              : 'an alternate facility'),
           reason: payload.reason ?? '',
           rerouted_at: payload.rerouted_at ?? new Date().toISOString(),
         },

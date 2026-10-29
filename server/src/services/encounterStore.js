@@ -312,9 +312,10 @@ export async function closeActiveForPatient(
     patient_id: patientId,
     activeOnly: true,
   });
+  const closed = [];
 
   for (const encounter of active) {
-    await updateEncounter(encounter.id, {
+    const updated = await updateEncounter(encounter.id, {
       status: 'CLOSED',
       timeline: [
         ...encounter.timeline,
@@ -325,9 +326,11 @@ export async function closeActiveForPatient(
         },
       ],
     });
+
+    if (updated) closed.push(updated);
   }
 
-  return active.length;
+  return closed;
 }
 
 export async function countEncounters(filter = {}) {

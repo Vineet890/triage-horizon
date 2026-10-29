@@ -2447,7 +2447,37 @@ export default function AdminPortal() {
       ),
     [encounters]
   );
-  const activeQueue = activeEncounters.length > 0 ? activeEncounters : queue;
+  const activeQueue = useMemo(() => {
+    const source =
+      activeEncounters.length > 0
+        ? activeEncounters
+        : queue.filter((entry) =>
+            ACTIVE_ENCOUNTER_STATUSES.includes(entry.status)
+          );
+
+    const latestByPatient = new Map();
+
+    for (const entry of source) {
+      const key = entry.patient_id ?? entry.id;
+      if (!key) continue;
+
+      const current = latestByPatient.get(key);
+      const currentTime = current
+        ? new Date(
+            current.updated_at ?? current.created_at ?? current.received_at ?? 0
+          ).getTime()
+        : Number.NEGATIVE_INFINITY;
+      const entryTime = new Date(
+        entry.updated_at ?? entry.created_at ?? entry.received_at ?? 0
+      ).getTime();
+
+      if (!current || entryTime >= currentTime) {
+        latestByPatient.set(key, entry);
+      }
+    }
+
+    return Array.from(latestByPatient.values());
+  }, [activeEncounters, queue]);
 
   // The command view follows the newest reroute when one exists, otherwise the
   // highest-acuity active encounter. This keeps the primary rail aligned with

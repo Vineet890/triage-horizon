@@ -217,18 +217,21 @@ function HandoffPanel({
   // The handoff snapshot can lag behind the encounter store during a reroute,
   // so the socket payload is the freshest destination until the refetch lands.
   const activeRoute = liveRoute ?? routeUpdate ?? null;
-  const activeDestination = liveRoute?.selected_facility ?? destination ?? null;
-  const activeEta =
-    liveRoute?.selected_facility?.eta_min ??
-    liveRoute?.new_eta ??
-    destinationEta ??
-    null;
+  const rerouteFailed =
+    liveRoute?.reroute_status === 'NO_ALTERNATIVE_AVAILABLE';
+  const activeDestination = rerouteFailed
+    ? null
+    : liveRoute?.selected_facility ?? destination ?? null;
+  const activeEta = rerouteFailed
+    ? null
+    : liveRoute?.selected_facility?.eta_min ??
+      liveRoute?.new_eta ??
+      destinationEta ??
+      null;
 
   // Keep the encounter rail in step with the destination swap; otherwise the
   // rail header would still name the facility the patient was rerouted away
   // from until the handoff record is refetched.
-  const rerouteFailed =
-    liveRoute?.reroute_status === 'NO_ALTERNATIVE_AVAILABLE';
   const railEncounter = liveRoute
     ? {
         ...encounter,
@@ -372,7 +375,7 @@ function HandoffPanel({
                     routeFlashing ? 'text-signal-amber-ink' : 'text-ink'
                   )}
                 >
-                  {activeDestination?.name ?? 'Manual coordination'}
+                  {activeDestination?.name ?? 'Manual care coordination'}
                 </motion.span>
               </AnimatePresence>
             </dd>
@@ -952,10 +955,39 @@ export default function DoctorPortal() {
 
   // The shared encounter list is the source of truth after a refresh. The
   // socket queue is still merged in for its arrival timestamp and highlight.
+  // Only the newest encounter per patient is shown, so a superseded case cannot
+  // produce a duplicate row or React key.
   const queueRows = useMemo(() => {
-    if (activeEncounters.length === 0) return queue;
+    const source =
+      activeEncounters.length > 0
+        ? activeEncounters
+        : queue.filter(
+            (entry) =>
+              !entry.status || ACTIVE_ENCOUNTER_STATUSES.includes(entry.status)
+          );
 
-    return activeEncounters.map((encounter) => {
+    const latestByPatient = new Map();
+
+    for (const entry of source) {
+      const key = entry.patient_id ?? entry.id;
+      if (!key) continue;
+
+      const current = latestByPatient.get(key);
+      const currentTime = current
+        ? new Date(
+            current.updated_at ?? current.created_at ?? current.received_at ?? 0
+          ).getTime()
+        : Number.NEGATIVE_INFINITY;
+      const entryTime = new Date(
+        entry.updated_at ?? entry.created_at ?? entry.received_at ?? 0
+      ).getTime();
+
+      if (!current || entryTime >= currentTime) {
+        latestByPatient.set(key, entry);
+      }
+    }
+
+    return Array.from(latestByPatient.values()).map((encounter) => {
       const liveEntry = queue.find(
         (entry) => entry.patient_id === encounter.patient_id
       );
@@ -987,8 +1019,11 @@ export default function DoctorPortal() {
   const selectedEntry =
     sortedQueue.find((entry) => entry.patient_id === selectedId) ?? null;
   const currentHandoff = handoff?.id === selectedId ? handoff : null;
+  // Prefer the live shared encounter over the handoff snapshot. Socket updates
+  // (acceptance by another clinician, reroute, prescription) land in the store
+  // first; the snapshot is only a fallback when the case has left the queue.
   const selectedEncounter =
-    currentHandoff?.handoff?.encounter ?? selectedEntry ?? null;
+    selectedEntry ?? currentHandoff?.handoff?.encounter ?? null;
   const destination = selectedEncounter?.selected_facility ?? null;
   const destinationEta =
     destination?.eta_min ??

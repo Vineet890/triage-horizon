@@ -1,8 +1,9 @@
 import { lazy, Suspense, useEffect } from 'react';
-import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
+import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import api from './lib/api';
 import socket from './lib/socket';
+import { SESSION_EXPIRED_EVENT } from './lib/session';
 import useTriageStore from './store/useTriageStore';
 import { BrandMark } from './components/Brand';
 import RouteToast from './components/RouteToast';
@@ -70,7 +71,9 @@ function SignOutRoute() {
 }
 
 export default function App() {
+  const navigate = useNavigate();
   const auth = useTriageStore((state) => state.auth);
+  const signOut = useTriageStore((state) => state.signOut);
   const setFacilities = useTriageStore((state) => state.setFacilities);
   const updateFacility = useTriageStore((state) => state.updateFacility);
   const applyRouteUpdate = useTriageStore((state) => state.applyRouteUpdate);
@@ -80,6 +83,19 @@ export default function App() {
   const setAgentTrace = useTriageStore((state) => state.setAgentTrace);
   const addPrescription = useTriageStore((state) => state.addPrescription);
   const setSocketConnected = useTriageStore((state) => state.setSocketConnected);
+
+  useEffect(() => {
+    const handleSessionExpired = () => {
+      signOut();
+      navigate('/login', { replace: true, state: { expired: true } });
+    };
+
+    window.addEventListener(SESSION_EXPIRED_EVENT, handleSessionExpired);
+
+    return () => {
+      window.removeEventListener(SESSION_EXPIRED_EVENT, handleSessionExpired);
+    };
+  }, [navigate, signOut]);
 
   useEffect(() => {
     if (!auth?.token) {
@@ -149,18 +165,16 @@ export default function App() {
       if (!Array.isArray(payload?.facilities)) return;
 
       const current = useTriageStore.getState().facilities;
-
-      if (current.length === 0) {
-        setFacilities(payload.facilities);
-        return;
-      }
-
-      setFacilities(
-        current.map((facility) => {
-          const live = payload.facilities.find((entry) => entry.id === facility.id);
-          return live ? { ...facility, ...live } : facility;
-        })
+      const byId = new Map(
+        current.filter((facility) => facility?.id).map((facility) => [facility.id, facility])
       );
+
+      payload.facilities.forEach((live) => {
+        if (!live?.id) return;
+        byId.set(live.id, { ...(byId.get(live.id) ?? {}), ...live });
+      });
+
+      setFacilities(Array.from(byId.values()));
     };
 
     loadFacilities();

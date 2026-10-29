@@ -1,5 +1,10 @@
 import axios from 'axios';
-import { readSession } from './session';
+import {
+  clearSession,
+  readSession,
+  SESSION_EXPIRED_EVENT,
+  storedSessionToken,
+} from './session';
 
 export const API_ORIGIN =
   import.meta.env.VITE_API_ORIGIN?.replace(/\/$/, '') || 'http://localhost:5000';
@@ -23,6 +28,28 @@ api.interceptors.request.use((config) => {
 
   return config;
 });
+
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    const status = error.response?.status;
+    const url = error.config?.url ?? '';
+
+    // Login failures also return 401; only a rejected bearer session should
+    // tear down the portal.
+    if (status === 401 && !url.includes('/auth/')) {
+      const hadToken = Boolean(storedSessionToken());
+
+      clearSession();
+
+      if (hadToken) {
+        window.dispatchEvent(new CustomEvent(SESSION_EXPIRED_EVENT));
+      }
+    }
+
+    return Promise.reject(error);
+  }
+);
 
 export function getApiErrorMessage(error, fallback = 'Something went wrong. Please try again.') {
   if (axios.isAxiosError(error)) {

@@ -1,5 +1,5 @@
 import express from 'express';
-import { authenticate } from '../middleware/auth.js';
+import { authenticate, requireRole } from '../middleware/auth.js';
 import { emitToPatient, emitToRole, getIO } from '../socket.js';
 
 const router = express.Router();
@@ -72,7 +72,7 @@ router.post('/create-room', (req, res) => {
 });
 
 // POST /api/video/accept
-router.post('/accept', (req, res) => {
+router.post('/accept', requireRole(['DOCTOR']), (req, res) => {
   const { room_id, doctor_name, specialty } = req.body ?? {};
 
   if (!room_id || typeof room_id !== 'string') {
@@ -112,6 +112,20 @@ router.post('/end', (req, res) => {
   }
 
   const patientId = patientIdFromRoom(room_id);
+
+  if (!patientId) {
+    return res.status(400).json({ error: 'Unrecognised room_id' });
+  }
+
+  // Clinicians may end any consultation; a patient may only end their own room.
+  if (req.user.role === 'PATIENT' && req.user.userId !== patientId) {
+    return res.status(403).json({ error: 'Not authorised for this consultation' });
+  }
+
+  if (!['PATIENT', 'DOCTOR'].includes(req.user.role)) {
+    return res.status(403).json({ error: 'Not authorised to end consultations' });
+  }
+
   const payload = stamp({
     room_id,
     patient_id: patientId,

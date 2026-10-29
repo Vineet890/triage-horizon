@@ -117,7 +117,7 @@ async function submitForPatient({ patientId, fallbackName, symptom, source }) {
   const patient = await loadPatientProfile(patientId, fallbackName);
   const decision = evaluateTriage({ patient, symptom });
 
-  await closeActiveForPatient(
+  const closedEncounters = await closeActiveForPatient(
     patient.id,
     patient.name || patient.id,
     'Superseded by a new intake'
@@ -127,7 +127,7 @@ async function submitForPatient({ patientId, fallbackName, symptom, source }) {
     buildEncounterPayload({ patient, decision, source })
   );
 
-  return { patient, decision, encounter };
+  return { patient, decision, encounter, closedEncounters };
 }
 
 /**
@@ -158,13 +158,14 @@ router.post(
     }
 
     try {
-      const { decision, encounter } = await submitForPatient({
+      const { decision, encounter, closedEncounters } = await submitForPatient({
         patientId: req.user.userId,
         symptom: symptom_text.trim(),
         source: 'live',
       });
 
       const io = getIO();
+      for (const closed of closedEncounters) emitEncounter(io, closed);
       emitAgentThinking(io, encounter);
       emitEncounter(io, encounter);
       emitLegacyTriage(io, encounter);
@@ -203,6 +204,7 @@ router.post(
       const demoResponses = readJson(DEMO_RESPONSES_PATH);
       const patients = readJson(PATIENTS_PATH);
       const encounters = [];
+      const closedEncounters = [];
 
       for (const patient of patients) {
         const fixture = demoResponses[patient.id];
@@ -218,9 +220,11 @@ router.post(
         });
 
         encounters.push(result.encounter);
+        closedEncounters.push(...(result.closedEncounters ?? []));
       }
 
       const io = getIO();
+      for (const closed of closedEncounters) emitEncounter(io, closed);
       for (const encounter of encounters) {
         emitAgentThinking(io, encounter);
         emitEncounter(io, encounter);

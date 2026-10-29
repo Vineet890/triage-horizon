@@ -70,6 +70,7 @@ router.get('/', authenticate, requireRole(['ADMIN']), async (req, res) => {
 
     const networkLoad = average(
       facilities
+        .filter((facility) => facility.status !== 'OFFLINE')
         .map((facility) => Number(facility.capacity_pct))
         .filter((value) => Number.isFinite(value))
     );
@@ -81,8 +82,8 @@ router.get('/', authenticate, requireRole(['ADMIN']), async (req, res) => {
       reroute_frequency: rerouted.length,
       active_encounters: active.length,
       total_encounters: encounters.length,
-      awaiting_acceptance: encounters.filter(
-        (encounter) => encounter.status === 'TRIAGED'
+      awaiting_acceptance: encounters.filter((encounter) =>
+        ['TRIAGED', 'AWAITING_ACCEPTANCE'].includes(encounter.status)
       ).length,
       prescriptions_sent: encounters.filter(
         (encounter) => encounter.prescription

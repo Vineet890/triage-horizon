@@ -163,6 +163,7 @@ export async function rerouteAffectedPatients(facilityId, io) {
         status: 'ROUTING',
         facility_id: null,
         facility_name: 'Manual care coordination',
+        facility_snapshot: null,
         selected_facility: null,
         route_update: update,
         timeline: [

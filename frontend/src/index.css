@@ -228,11 +228,11 @@
 
   ::-webkit-scrollbar-thumb {
     border-radius: 6px;
-    background: var(--border-strong);
+    background: rgb(var(--border-strong));
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: var(--ink-muted);
+    background: rgb(var(--ink-muted));
   }
 }
 

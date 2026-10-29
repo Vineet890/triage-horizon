@@ -87,15 +87,19 @@ const TABS = [
   },
 ];
 
-const TODAY = new Intl.DateTimeFormat('en-IN', {
-  weekday: 'long',
-  day: '2-digit',
-  month: 'long',
-  year: 'numeric',
-  timeZone: 'Asia/Kolkata',
-}).format(new Date());
+function todayLabel() {
+  return new Intl.DateTimeFormat('en-IN', {
+    weekday: 'long',
+    day: '2-digit',
+    month: 'long',
+    year: 'numeric',
+    timeZone: 'Asia/Kolkata',
+  }).format(new Date());
+}
 
-const TODAY_INDEX = (new Date().getDay() + 6) % 7;
+function todayIndex() {
+  return (new Date().getDay() + 6) % 7;
+}
 
 const initialTakenState = Object.fromEntries(
   MEDICATION_PLAN.map((medication) => [medication.id, medication.defaultTaken])
@@ -255,7 +259,7 @@ function PatientTopbar({ patient, activeTab, onTabChange, onSignOut, socketConne
           <div className="min-w-0">
             <p className="truncate text-sm font-semibold text-ink">{tab.label}</p>
             <p className="mt-0.5 hidden font-mono text-[9px] uppercase tracking-[0.1em] text-ink-muted sm:block">
-              Patient workspace · {TODAY}
+              Patient workspace · {todayLabel()}
             </p>
           </div>
         </div>
@@ -833,7 +837,7 @@ function TriageTab({
         </div>
         <div className="flex w-fit items-center gap-2 rounded-[6px] border border-border bg-surface px-3 py-2 text-xs text-ink-muted">
           <CalendarDays aria-hidden="true" className="h-3.5 w-3.5" />
-          {TODAY}
+          {todayLabel()}
         </div>
       </div>
 
@@ -1079,7 +1083,7 @@ function MedicationTab({
                   Today&apos;s schedule
                 </h2>
                 <p className="mt-1 text-sm text-ink-muted">
-                  {medicationPlan.length} prescribed items · {TODAY}
+                  {medicationPlan.length} prescribed items · {todayLabel()}
                 </p>
               </div>
               <div className="flex flex-wrap items-center gap-2">
@@ -1642,6 +1646,12 @@ export default function PatientPortal() {
   const visibleEncounter =
     patientEncounter?.id === dismissedEncounterId ? null : patientEncounter;
 
+  // Derived once so the video handler does not depend on the memoized result
+  // object that is declared later in the component.
+  const videoCareTier =
+    triageResult?.care_tier ?? visibleEncounter?.care_tier ?? null;
+  const videoAcuity = triageResult?.acuity ?? visibleEncounter?.acuity ?? null;
+
   const traceSteps = useMemo(() => {
     if (
       agentTrace.length > 0 &&
@@ -1819,6 +1829,10 @@ export default function PatientPortal() {
     event.preventDefault();
     if (!canSubmit) return;
 
+    const previousResult = triageResult;
+    const previousDismissedId = dismissedEncounterId;
+    const previousSubmittedAt = submittedAt;
+
     resetVideo();
 
     if (rerouteTimer.current) {
@@ -1852,6 +1866,10 @@ export default function PatientPortal() {
         response.data.encounter_id ?? null
       );
     } catch (requestError) {
+      // A failed submission must not erase the previous decision.
+      setTriageResult(previousResult);
+      setDismissedEncounterId(previousDismissedId);
+      setSubmittedAt(previousSubmittedAt);
       setError(
         getApiErrorMessage(
           requestError,
@@ -1884,7 +1902,7 @@ export default function PatientPortal() {
   };
 
   const handleJoinVideo = async () => {
-    if (!triageResult || triageResult.care_tier !== 'telehealth') return;
+    if (videoCareTier !== 'telehealth') return;
     if (videoStatus === 'connecting') return;
 
     setVideoStatus('connecting');
@@ -1894,7 +1912,7 @@ export default function PatientPortal() {
       const { data } = await api.post('/video/create-room', {
         patient_id: patient.id,
         patient_name: patient.name,
-        acuity: triageResult.acuity,
+        acuity: videoAcuity,
       });
 
       setVideoRoom(data.room_id ?? `TH-ROOM-${patient.id}`);
@@ -1985,9 +2003,11 @@ export default function PatientPortal() {
       care_tier: visibleEncounter.care_tier,
       protocol_matched: visibleEncounter.protocol_matched,
       selected_facility:
-        visibleEncounter.selected_facility ??
-        visibleEncounter.facility_snapshot ??
-        null,
+        visibleEncounter.route_update?.selected_facility !== undefined
+          ? visibleEncounter.route_update.selected_facility
+          : visibleEncounter.selected_facility ??
+            visibleEncounter.facility_snapshot ??
+            null,
       rejected_facilities: visibleEncounter.rejected_facilities ?? [],
       special_flags: visibleEncounter.special_flags ?? [],
       risk_modifiers: visibleEncounter.risk_modifiers ?? [],
@@ -2002,14 +2022,16 @@ export default function PatientPortal() {
     };
   }, [triageResult, visibleEncounter]);
   const acuityMeta = result ? getAcuityMeta(result.acuity) : null;
-  const selectedFacility = displayedFacility ?? result?.selected_facility ?? null;
+  const routeUpdate = revealedRoute ?? result?.route_update ?? null;
+  const selectedFacility = routeUpdate
+    ? routeUpdate.selected_facility ?? null
+    : displayedFacility ?? result?.selected_facility ?? null;
   const liveFacility = facilities.find(
     (facility) => facility.id === selectedFacility?.id
   );
   const facilityEta = selectedFacility?.eta_min ?? liveFacility?.eta_min ?? null;
   const facilityDistance =
     selectedFacility?.distance_km ?? liveFacility?.distance_km ?? null;
-  const routeUpdate = revealedRoute ?? result?.route_update ?? null;
   const declinedFacilities = (result?.rejected_facilities ?? [])
     .filter((facility) => facility.id !== selectedFacility?.id)
     .filter(
@@ -2023,8 +2045,8 @@ export default function PatientPortal() {
   const todayAdherence = Math.round((takenCount / medicationPlan.length) * 100);
   const adherenceData = WEEKLY_ADHERENCE.map((entry, index) => ({
     ...entry,
-    value: index === TODAY_INDEX ? todayAdherence : entry.value,
-    isToday: index === TODAY_INDEX,
+    value: index === todayIndex() ? todayAdherence : entry.value,
+    isToday: index === todayIndex(),
   }));
   const weeklyAverage = Math.round(
     adherenceData.reduce((sum, entry) => sum + entry.value, 0) /

@@ -219,7 +219,20 @@ export function initSocket(httpServer) {
       }
 
       // Rule 7: rerouting is invoked explicitly right after the state change.
-      const rerouted = await rerouteAffectedPatients(facilityId, io);
+      let rerouted;
+
+      try {
+        rerouted = await rerouteAffectedPatients(facilityId, io);
+      } catch (error) {
+        console.error('[socket.io] SIMULATE_SHOCK reroute failed:', error);
+        reply(ack, {
+          success: false,
+          error: 'Facility state changed, but rerouting failed. Retry the shock or refresh state.',
+          facility_id: facilityId,
+          facility: state,
+        });
+        return;
+      }
 
       // Operational shock context goes to staff only. Patients receive the
       // precise ROUTE_UPDATED / ENCOUNTER_UPDATED events for their own case.
