@@ -33,10 +33,43 @@ function formatDuration(totalSeconds) {
   return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
 }
 
+const JITSI_DOMAIN =
+  import.meta.env.VITE_JITSI_DOMAIN?.replace(/^https?:\/\//, '').replace(/\/$/, '') ||
+  'jitsi.riot.im';
+
+/**
+ * Builds the Jitsi room URL with the local participant's display name baked in.
+ * Without this Jitsi shows its own pre-join screen asking for a username, which
+ * looks like the app is asking for credentials.
+ *
+ * The domain is configurable because meet.jit.si now requires the first
+ * participant to log in as a moderator, which breaks anonymous demo rooms.
+ */
+function buildRoomUrl(roomId, displayName) {
+  const params = [];
+
+  if (displayName) {
+    // Jitsi expects the display name as a JSON string in the hash.
+    params.push(
+      `userInfo.displayName=${encodeURIComponent(JSON.stringify(displayName))}`
+    );
+  }
+
+  params.push(
+    'config.prejoinPageEnabled=false',
+    'config.prejoinConfig.enabled=false',
+    'config.enableWelcomePage=false',
+    'config.disableDeepLinking=true'
+  );
+
+  return `https://${JITSI_DOMAIN}/${encodeURIComponent(roomId)}#${params.join('&')}`;
+}
+
 export default function VideoConsultation({
   roomId,
   status = 'waiting',
   participant = '',
+  displayName = '',
   startedAt = null,
   error = '',
   ending = false,
@@ -131,14 +164,14 @@ export default function VideoConsultation({
         <>
           <iframe
             title={`Jitsi video consultation ${roomId}`}
-            src={`https://meet.jit.si/${roomId}`}
+            src={buildRoomUrl(roomId, displayName)}
             style={{
               width: '100%',
               height: '500px',
               border: '1px solid rgb(var(--border))',
               borderRadius: '6px',
             }}
-            allow="camera; microphone; fullscreen"
+            allow="camera; microphone; fullscreen; display-capture"
             allowFullScreen
           />
 

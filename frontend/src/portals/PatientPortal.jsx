@@ -509,6 +509,7 @@ function CareTeamCard() {
 
 function RoutingResult({
   result,
+  patientName,
   acuityMeta,
   selectedFacility,
   facilityEta,
@@ -527,6 +528,8 @@ function RoutingResult({
   onEndVideo,
   onDismissVideo,
 }) {
+  const isTelehealth = result.care_tier === 'telehealth';
+
   return (
     <ClinicalCard className="overflow-hidden p-0">
       <div className="flex flex-col gap-3 border-b border-border p-6 sm:flex-row sm:items-center sm:justify-between">
@@ -661,78 +664,78 @@ function RoutingResult({
           </AnimatePresence>
         </motion.div>
 
-        {result.care_tier === 'telehealth' && (
-          <div className="mt-6 border-t border-border pt-6">
-            {!videoRoom ? (
-              <div className="rounded-[6px] border border-brand-border bg-brand-soft p-5">
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                  <div className="flex items-start gap-3">
-                    <span className="grid h-10 w-10 shrink-0 place-items-center rounded-[6px] border border-brand-border bg-surface text-brand-strong">
-                      <Video aria-hidden="true" className="h-5 w-5" />
-                    </span>
-                    <div>
-                      <h3 className="text-base font-semibold text-brand-strong">
-                        Telehealth consultation
-                      </h3>
-                      <p className="mt-1 max-w-xl text-sm leading-6 text-brand-strong">
-                        This route is eligible for a secure video visit. Join the
-                        room and a clinician will meet you there.
-                      </p>
-                    </div>
+        <div className="mt-6 border-t border-border pt-6">
+          {!videoRoom ? (
+            <div className="rounded-[6px] border border-brand-border bg-brand-soft p-5">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex items-start gap-3">
+                  <span className="grid h-10 w-10 shrink-0 place-items-center rounded-[6px] border border-brand-border bg-surface text-brand-strong">
+                    <Video aria-hidden="true" className="h-5 w-5" />
+                  </span>
+                  <div>
+                    <h3 className="text-base font-semibold text-brand-strong">
+                      {isTelehealth ? 'Telehealth consultation' : 'Video consultation'}
+                    </h3>
+                    <p className="mt-1 max-w-xl text-sm leading-6 text-brand-strong">
+                      {isTelehealth
+                        ? 'This route is eligible for a secure video visit. Join the room and a clinician will meet you there.'
+                        : 'Start a secure video visit at any time. A clinician will meet you in the room; keep following your routed destination for in-person care.'}
+                    </p>
                   </div>
-
-                  <button
-                    type="button"
-                    onClick={onJoinVideo}
-                    disabled={videoStatus === 'connecting'}
-                    className={cn(
-                      'inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-[6px] border px-4 text-sm font-semibold transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-brand/30',
-                      videoStatus === 'connecting'
-                        ? 'cursor-wait border-brand bg-brand-solid text-white opacity-80'
-                        : 'border-brand bg-brand-solid text-white hover:bg-brand-solid-hover'
-                    )}
-                  >
-                    {videoStatus === 'connecting' ? (
-                      <Loader2 aria-hidden="true" className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <Video aria-hidden="true" className="h-4 w-4" />
-                    )}
-                    {videoStatus === 'connecting'
-                      ? 'Opening room…'
-                      : 'Join Video Consultation'}
-                  </button>
                 </div>
 
-                {videoError && (
-                  <p
-                    role="alert"
-                    className="mt-3 border-t border-brand-border pt-3 text-[13px] font-medium text-signal-danger-ink"
-                  >
-                    {videoError}
-                  </p>
-                )}
+                <button
+                  type="button"
+                  onClick={onJoinVideo}
+                  disabled={videoStatus === 'connecting'}
+                  className={cn(
+                    'inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-[6px] border px-4 text-sm font-semibold transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-brand/30',
+                    videoStatus === 'connecting'
+                      ? 'cursor-wait border-brand bg-brand-solid text-white opacity-80'
+                      : 'border-brand bg-brand-solid text-white hover:bg-brand-solid-hover'
+                  )}
+                >
+                  {videoStatus === 'connecting' ? (
+                    <Loader2 aria-hidden="true" className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Video aria-hidden="true" className="h-4 w-4" />
+                  )}
+                  {videoStatus === 'connecting'
+                    ? 'Opening room…'
+                    : 'Join Video Consultation'}
+                </button>
               </div>
-            ) : (
-              <VideoConsultation
-                roomId={videoRoom}
-                status={videoStatus}
-                participant={
-                  videoDoctor?.name
-                    ? `${videoDoctor.name}${
-                        videoDoctor.specialty ? ` · ${videoDoctor.specialty}` : ''
-                      }`
-                    : 'Clinician'
-                }
-                startedAt={videoStartedAt}
-                error={videoError}
-                ending={videoEnding}
-                title="Telehealth consultation"
-                onEnd={onEndVideo}
-                onClose={onDismissVideo}
-              />
-            )}
-          </div>
-        )}
+
+              {videoError && (
+                <p
+                  role="alert"
+                  className="mt-3 border-t border-brand-border pt-3 text-[13px] font-medium text-signal-danger-ink"
+                >
+                  {videoError}
+                </p>
+              )}
+            </div>
+          ) : (
+            <VideoConsultation
+              roomId={videoRoom}
+              status={videoStatus}
+              displayName={patientName}
+              participant={
+                videoDoctor?.name
+                  ? `${videoDoctor.name}${
+                      videoDoctor.specialty ? ` · ${videoDoctor.specialty}` : ''
+                    }`
+                  : 'Clinician'
+              }
+              startedAt={videoStartedAt}
+              error={videoError}
+              ending={videoEnding}
+              title={isTelehealth ? 'Telehealth consultation' : 'Video consultation'}
+              onEnd={onEndVideo}
+              onClose={onDismissVideo}
+            />
+          )}
+        </div>
 
         <div className="mt-6 grid gap-6 lg:grid-cols-2">
           <div>
@@ -945,6 +948,7 @@ function TriageTab({
               >
                 <RoutingResult
                   result={result}
+                  patientName={patient.name}
                   acuityMeta={acuityMeta}
                   selectedFacility={selectedFacility}
                   facilityEta={facilityEta}
@@ -1648,8 +1652,6 @@ export default function PatientPortal() {
 
   // Derived once so the video handler does not depend on the memoized result
   // object that is declared later in the component.
-  const videoCareTier =
-    triageResult?.care_tier ?? visibleEncounter?.care_tier ?? null;
   const videoAcuity = triageResult?.acuity ?? visibleEncounter?.acuity ?? null;
 
   const traceSteps = useMemo(() => {
@@ -1902,7 +1904,6 @@ export default function PatientPortal() {
   };
 
   const handleJoinVideo = async () => {
-    if (videoCareTier !== 'telehealth') return;
     if (videoStatus === 'connecting') return;
 
     setVideoStatus('connecting');

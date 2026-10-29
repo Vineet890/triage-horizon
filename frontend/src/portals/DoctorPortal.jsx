@@ -134,6 +134,7 @@ function HandoffPanel({
   const [liveRoute, setLiveRoute] = useState(null);
   const routeFlashTimer = useRef(null);
   const handoffPatientId = handoff?.id ?? null;
+  const isTelehealth = careTier === 'telehealth';
 
   // The handoff card owns its own flash and destination swap so the card can
   // turn amber and show the new facility the instant ROUTE_UPDATED lands,
@@ -560,54 +561,53 @@ function HandoffPanel({
       )}
 
       <div className="divide-y divide-border">
-        {careTier === 'telehealth' && (
-          <section className="p-6">
-            <div className="rounded-[6px] border border-brand-border bg-brand-soft p-4">
-              <div className="flex items-start gap-3">
-                <span className="grid h-9 w-9 shrink-0 place-items-center rounded-[6px] border border-brand-border bg-surface text-brand-strong">
-                  <Video aria-hidden="true" className="h-4 w-4" />
-                </span>
-                <div className="min-w-0">
-                  <h3 className="text-sm font-semibold text-brand-strong">
-                    Telehealth consultation
-                  </h3>
-                  <p className="mt-1 text-xs leading-5 text-brand-strong">
-                    This patient was routed to telehealth. Open the secure Jitsi
-                    room when you are ready to see them.
-                  </p>
-                </div>
-              </div>
-
-              <div className="mt-3 flex flex-wrap items-center gap-2">
-                <button
-                  type="button"
-                  onClick={onAcceptVideo}
-                  disabled={callStatus === 'connecting' || callStatus === 'active'}
-                  className={cn(
-                    'inline-flex h-9 items-center justify-center gap-2 rounded-[6px] border px-3 text-sm font-semibold transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-brand/30',
-                    callStatus === 'connecting' || callStatus === 'active'
-                      ? 'border-border bg-surface-strong text-ink-muted'
-                      : 'border-brand bg-brand-solid text-white hover:bg-brand-solid-hover'
-                  )}
-                >
-                  {callStatus === 'connecting' ? (
-                    <Loader2 aria-hidden="true" className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <PhoneCall aria-hidden="true" className="h-4 w-4" />
-                  )}
-                  {callStatus === 'active'
-                    ? 'Video call in progress'
-                    : callStatus === 'connecting'
-                      ? 'Connecting…'
-                      : 'Accept Video Call'}
-                </button>
-                <span className="font-mono text-[10px] text-brand-strong">
-                  TH-ROOM-{handoff.id}
-                </span>
+        <section className="p-6">
+          <div className="rounded-[6px] border border-brand-border bg-brand-soft p-4">
+            <div className="flex items-start gap-3">
+              <span className="grid h-9 w-9 shrink-0 place-items-center rounded-[6px] border border-brand-border bg-surface text-brand-strong">
+                <Video aria-hidden="true" className="h-4 w-4" />
+              </span>
+              <div className="min-w-0">
+                <h3 className="text-sm font-semibold text-brand-strong">
+                  {isTelehealth ? 'Telehealth consultation' : 'Video consultation'}
+                </h3>
+                <p className="mt-1 text-xs leading-5 text-brand-strong">
+                  {isTelehealth
+                    ? 'This patient was routed to telehealth. Open the secure Jitsi room when you are ready to see them.'
+                    : 'Start a secure video visit for this patient. The routed destination still applies for in-person care.'}
+                </p>
               </div>
             </div>
-          </section>
-        )}
+
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={onAcceptVideo}
+                disabled={callStatus === 'connecting' || callStatus === 'active'}
+                className={cn(
+                  'inline-flex h-9 items-center justify-center gap-2 rounded-[6px] border px-3 text-sm font-semibold transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-brand/30',
+                  callStatus === 'connecting' || callStatus === 'active'
+                    ? 'border-border bg-surface-strong text-ink-muted'
+                    : 'border-brand bg-brand-solid text-white hover:bg-brand-solid-hover'
+                )}
+              >
+                {callStatus === 'connecting' ? (
+                  <Loader2 aria-hidden="true" className="h-4 w-4 animate-spin" />
+                ) : (
+                  <PhoneCall aria-hidden="true" className="h-4 w-4" />
+                )}
+                {callStatus === 'active'
+                  ? 'Video call in progress'
+                  : callStatus === 'connecting'
+                    ? 'Connecting…'
+                    : 'Accept Video Call'}
+              </button>
+              <span className="font-mono text-[10px] text-brand-strong">
+                TH-ROOM-{handoff.id}
+              </span>
+            </div>
+          </div>
+        </section>
 
         <section className="p-6">
           <h3 className="flex items-center gap-2 text-sm font-semibold text-ink">
@@ -1024,6 +1024,7 @@ export default function DoctorPortal() {
   // first; the snapshot is only a fallback when the case has left the queue.
   const selectedEncounter =
     selectedEntry ?? currentHandoff?.handoff?.encounter ?? null;
+  const selectedCareTier = selectedEncounter?.care_tier ?? null;
   const destination = selectedEncounter?.selected_facility ?? null;
   const destinationEta =
     destination?.eta_min ??
@@ -1475,11 +1476,16 @@ export default function DoctorPortal() {
             <VideoConsultation
               roomId={activeCall.room_id}
               status={callStatus === 'ended' ? 'ended' : 'active'}
+              displayName={doctorName}
               participant={activeCall.patient_name}
               startedAt={activeCall.started_at}
               error={callError}
               ending={callEnding}
-              title="Telehealth consultation"
+              title={
+                selectedCareTier === 'telehealth'
+                  ? 'Telehealth consultation'
+                  : 'Video consultation'
+              }
               onEnd={handleEndCall}
               onClose={handleCloseCall}
             />

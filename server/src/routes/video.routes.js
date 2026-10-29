@@ -5,7 +5,7 @@ import { emitToPatient, emitToRole, getIO } from '../socket.js';
 const router = express.Router();
 
 const ACUITY_VALUES = ['CRITICAL', 'HIGH', 'MODERATE', 'LOW'];
-const JITSI_DOMAIN = 'meet.jit.si';
+const JITSI_DOMAIN = process.env.JITSI_DOMAIN || 'jitsi.riot.im';
 const ROOM_PREFIX = 'TH-ROOM-';
 
 // Every video endpoint requires a valid JWT.
