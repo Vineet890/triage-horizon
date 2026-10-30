@@ -9,6 +9,7 @@ export default function PortalHeader({
   roleLabel = '',
   userName = '',
   homePath = '/',
+  children = null,
 }) {
   const navigate = useNavigate();
   const socketConnected = useTriageStore((state) => state.socketConnected);
@@ -48,6 +49,8 @@ export default function PortalHeader({
               {userName}
             </span>
           )}
+
+          {children}
 
           <ThemeToggle tone="forest" />
 

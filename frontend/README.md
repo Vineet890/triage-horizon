@@ -107,11 +107,26 @@ shocking after a single patient submission targets that patient's facility.
 
 ## Configuration
 
-Copy `.env.example` to `.env` when the API is not on the default port:
+The Vite development server proxies `/api` and Socket.IO traffic to the backend
+on port 5000. Start the backend and frontend locally, then forward/open the
+frontend port (5173); the backend port does not need to be exposed separately.
+GitHub Codespaces forwarded hostnames are allowed by the dev server, so this
+works without deploying the backend.
+Video calls use Jitsi's supported IFrame API, separately from the forwarded
+backend API, so the embedded room receives the required camera, microphone,
+autoplay, and display-capture permissions. If the embedded room disconnects on
+a device, try **Open room in new tab**; if it disconnects there too, that device
+or network cannot maintain a connection to the Jitsi service.
+
+Copy `.env.example` to `.env` only when connecting directly to an API on a
+different host or port:
 
 ```env
-VITE_API_ORIGIN=http://localhost:5000
+VITE_API_ORIGIN=https://<backend-forwarded-origin>
 ```
+
+Use the actual backend origin without a trailing slash. Leave the value empty
+to use the built-in Vite proxy.
 
 ## Checks
 

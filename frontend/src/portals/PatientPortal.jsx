@@ -53,6 +53,7 @@ import AgentTrace from '../components/AgentTrace';
 import ClinicalCard from '../components/ClinicalCard';
 import EncounterRail from '../components/EncounterRail';
 import PatientRouteStatus from '../components/PatientRouteStatus';
+import PatientPrescriptionNotifications from '../components/PatientPrescriptionNotifications';
 import ThinkingLog from '../components/ThinkingLog';
 import VideoConsultation from '../components/VideoConsultation';
 
@@ -248,7 +249,13 @@ function PatientSidebar({ patient, activeTab, onTabChange, onSignOut, socketConn
   );
 }
 
-function PatientTopbar({ patient, activeTab, onTabChange, onSignOut, socketConnected }) {
+function PatientTopbar({
+  patient,
+  activeTab,
+  onTabChange,
+  onSignOut,
+  socketConnected,
+}) {
   const tab = TABS.find((item) => item.id === activeTab) ?? TABS[0];
 
   return (
@@ -275,6 +282,8 @@ function PatientTopbar({ patient, activeTab, onTabChange, onSignOut, socketConne
             />
             {socketConnected ? 'Live' : 'Reconnecting'}
           </span>
+
+          <PatientPrescriptionNotifications patientId={patient.id} />
 
           <ThemeToggle />
 

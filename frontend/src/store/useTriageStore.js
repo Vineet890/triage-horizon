@@ -1,6 +1,8 @@
 import { create } from 'zustand';
 import { clearSession, readSession, writeSession } from '../lib/session';
 import { applyTheme, readTheme, writeTheme } from '../lib/theme';
+import { PATIENT_DIRECTORY } from '../lib/demoPatients';
+import { playTriageChime } from '../lib/sound';
 
 const ROUTE_UPDATE_LIMIT = 24;
 
@@ -13,6 +15,47 @@ export const ACTIVE_ENCOUNTER_STATUSES = [
 ];
 
 const ACTIVE_STATUS_SET = new Set(ACTIVE_ENCOUNTER_STATUSES);
+
+function createNotificationItem(payload, defaultRead = false) {
+  if (!payload?.patient_id && !payload?.id) return null;
+
+  const patientId = payload.patient_id ?? payload.id;
+  const symptom =
+    payload.symptom ??
+    payload.decision?.symptom ??
+    payload.encounter?.symptom ??
+    'Patient symptom intake submitted';
+
+  const patientName =
+    payload.patient_name ??
+    payload.patient?.name ??
+    PATIENT_DIRECTORY[patientId]?.name ??
+    patientId;
+
+  const encounterId = payload.encounter_id ?? payload.id ?? null;
+  const notificationId = `notif-${patientId}-${encounterId ?? Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+
+  return {
+    id: notificationId,
+    encounter_id: encounterId,
+    patient_id: patientId,
+    patient_name: patientName,
+    symptom,
+    acuity: payload.acuity ?? 'MODERATE',
+    care_tier: payload.care_tier ?? 'telehealth',
+    protocol_matched: payload.protocol_matched ?? 'Clinical Protocol',
+    facility_name:
+      payload.facility_name ??
+      payload.selected_facility?.name ??
+      null,
+    selected_facility: payload.selected_facility ?? null,
+    agent_rationale: payload.agent_rationale ?? '',
+    risk_modifiers: payload.risk_modifiers ?? [],
+    special_flags: payload.special_flags ?? [],
+    timestamp: payload.created_at ?? payload.received_at ?? new Date().toISOString(),
+    read: defaultRead,
+  };
+}
 
 function mergeRoute(entry, payload) {
   if (entry.patient_id !== payload.patient_id) return entry;
@@ -95,6 +138,34 @@ function mergePrescriptions(list, incoming) {
   );
 }
 
+function mergePrescriptionNotifications(existing, incoming, defaultRead) {
+  const notifications = new Map(
+    existing.map((item) => [item.prescription_id, item])
+  );
+
+  incoming.forEach((prescription) => {
+    if (!prescription?.prescription_id) return;
+
+    const current = notifications.get(prescription.prescription_id);
+    notifications.set(prescription.prescription_id, {
+      id: prescription.prescription_id,
+      prescription_id: prescription.prescription_id,
+      patient_id: prescription.patient_id ?? current?.patient_id ?? null,
+      prescription: {
+        ...current?.prescription,
+        ...prescription,
+      },
+      sent_at: prescription.sent_at ?? current?.sent_at ?? null,
+      read: current?.read ?? defaultRead,
+    });
+  });
+
+  return Array.from(notifications.values()).sort(
+    (a, b) =>
+      new Date(b.sent_at ?? 0).getTime() - new Date(a.sent_at ?? 0).getTime()
+  );
+}
+
 function mergeTriageResult(result, encounter) {
   if (!result || !encounter) return result;
   if (
@@ -151,7 +222,11 @@ export const useTriageStore = create((set, get) => ({
   agentTrace: [],
   agentTraceEncounterId: null,
   prescriptions: [],
+  prescriptionNotifications: [],
   prescriptionToast: null,
+  triageNotifications: [],
+  triageToast: null,
+  notificationSoundEnabled: true,
 
   setFacilities: (facilities) =>
     set({
@@ -184,6 +259,11 @@ export const useTriageStore = create((set, get) => ({
         state.prescriptions,
         collectPrescriptions(encounters)
       );
+      const prescriptionNotifications = mergePrescriptionNotifications(
+        state.prescriptionNotifications,
+        collectPrescriptions(encounters),
+        true
+      );
 
       const activeEncounterId =
         encounters.some((encounter) => encounter.id === state.activeEncounterId)
@@ -198,9 +278,20 @@ export const useTriageStore = create((set, get) => ({
         (encounter) => encounter.id === activeEncounterId
       );
 
+      let triageNotifications = state.triageNotifications;
+      if (triageNotifications.length === 0 && encounters.length > 0) {
+        triageNotifications = encounters
+          .filter((enc) => enc.symptom)
+          .slice(0, 15)
+          .map((enc) => createNotificationItem(enc, true))
+          .filter(Boolean);
+      }
+
       return {
         encounters,
         prescriptions,
+        prescriptionNotifications,
+        triageNotifications,
         activeEncounterId,
         triageResult: selected
           ? mergeTriageResult(state.triageResult, selected)
@@ -213,6 +304,9 @@ export const useTriageStore = create((set, get) => ({
       const encounter = encounterFrom(payload);
       if (!encounter) return state;
 
+      const previousEncounter = state.encounters.find(
+        (entry) => entry.id === encounter.id
+      );
       const encounters = mergeEncounterList(state.encounters, encounter);
       const incomingPrescription = encounter.prescription
         ? [
@@ -223,6 +317,19 @@ export const useTriageStore = create((set, get) => ({
             },
           ]
         : [];
+      const isNewPrescription = incomingPrescription.some(
+        (prescription) =>
+          !previousEncounter?.prescription?.prescription_id &&
+          !state.prescriptions.some(
+            (saved) =>
+              saved.prescription_id === prescription.prescription_id
+          )
+      );
+      const prescriptionNotifications = mergePrescriptionNotifications(
+        state.prescriptionNotifications,
+        incomingPrescription,
+        !isNewPrescription
+      );
 
       const matchesCurrent =
         !state.activeEncounterId ||
@@ -239,6 +346,7 @@ export const useTriageStore = create((set, get) => ({
           state.prescriptions,
           incomingPrescription
         ),
+        prescriptionNotifications,
         queue: state.queue.map((entry) =>
           entry.patient_id === encounter.patient_id
             ? {
@@ -284,12 +392,33 @@ export const useTriageStore = create((set, get) => ({
         ? mergeEncounterList(state.encounters, encounter)
         : state.encounters;
 
+      const notification = createNotificationItem(payload, false);
+      let triageNotifications = state.triageNotifications;
+      let triageToast = state.triageToast;
+
+      if (notification) {
+        if (state.notificationSoundEnabled) {
+          playTriageChime(notification.acuity);
+        }
+        triageNotifications = [
+          notification,
+          ...state.triageNotifications.filter(
+            (n) =>
+              n.encounter_id !== notification.encounter_id ||
+              !notification.encounter_id
+          ),
+        ].slice(0, 50);
+        triageToast = notification;
+      }
+
       return {
         queue: [
           entry,
           ...state.queue.filter((item) => item.patient_id !== entry.patient_id),
         ],
         encounters,
+        triageNotifications,
+        triageToast,
         activeEncounterId: encounter?.id ?? state.activeEncounterId,
         triageResult:
           state.triageResult?.patient_id === entry.patient_id
@@ -401,6 +530,11 @@ export const useTriageStore = create((set, get) => ({
       return {
         encounters,
         prescriptions: mergePrescriptions(state.prescriptions, [prescription]),
+        prescriptionNotifications: mergePrescriptionNotifications(
+          state.prescriptionNotifications,
+          [prescription],
+          false
+        ),
         triageResult: mergeTriageResult(state.triageResult, updatedEncounter),
         prescriptionToast: {
           id: prescription.prescription_id,
@@ -415,7 +549,71 @@ export const useTriageStore = create((set, get) => ({
 
   dismissPrescriptionToast: () => set({ prescriptionToast: null }),
 
+  markPrescriptionNotificationRead: (id) =>
+    set((state) => ({
+      prescriptionNotifications: state.prescriptionNotifications.map((item) =>
+        item.id === id ? { ...item, read: true } : item
+      ),
+    })),
+
+  markAllPrescriptionNotificationsRead: () =>
+    set((state) => ({
+      prescriptionNotifications: state.prescriptionNotifications.map((item) => ({
+        ...item,
+        read: true,
+      })),
+    })),
+
   dismissRouteToast: () => set({ routeToast: null }),
+
+  addTriageNotification: (payload) =>
+    set((state) => {
+      const notification = createNotificationItem(payload, false);
+      if (!notification) return state;
+
+      if (state.notificationSoundEnabled) {
+        playTriageChime(notification.acuity);
+      }
+
+      const filtered = state.triageNotifications.filter(
+        (n) =>
+          n.encounter_id !== notification.encounter_id ||
+          !notification.encounter_id
+      );
+
+      return {
+        triageNotifications: [notification, ...filtered].slice(0, 50),
+        triageToast: notification,
+      };
+    }),
+
+  dismissTriageToast: () => set({ triageToast: null }),
+
+  markNotificationRead: (id) =>
+    set((state) => ({
+      triageNotifications: state.triageNotifications.map((item) =>
+        item.id === id ? { ...item, read: true } : item
+      ),
+    })),
+
+  markAllNotificationsRead: () =>
+    set((state) => ({
+      triageNotifications: state.triageNotifications.map((item) => ({
+        ...item,
+        read: true,
+      })),
+    })),
+
+  clearNotifications: () =>
+    set({
+      triageNotifications: [],
+      triageToast: null,
+    }),
+
+  toggleNotificationSound: () =>
+    set((state) => ({
+      notificationSoundEnabled: !state.notificationSoundEnabled,
+    })),
 
   setCurrentPatient: (patient) => set({ currentPatient: patient }),
 
@@ -460,7 +658,10 @@ export const useTriageStore = create((set, get) => ({
       agentTrace: [],
       agentTraceEncounterId: null,
       prescriptions: [],
+      prescriptionNotifications: [],
       prescriptionToast: null,
+      triageNotifications: [],
+      triageToast: null,
     });
   },
 

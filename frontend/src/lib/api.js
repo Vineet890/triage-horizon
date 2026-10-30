@@ -7,7 +7,7 @@ import {
 } from './session';
 
 export const API_ORIGIN =
-  import.meta.env.VITE_API_ORIGIN?.replace(/\/$/, '') || 'http://localhost:5000';
+  import.meta.env.VITE_API_ORIGIN?.replace(/\/$/, '') || '';
 export const API_BASE_URL = `${API_ORIGIN}/api`;
 export const SOCKET_URL = API_ORIGIN;
 

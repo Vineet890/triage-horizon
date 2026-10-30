@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { Loader2, PhoneOff, ShieldCheck, Video } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { ExternalLink, Loader2, PhoneOff, ShieldCheck, Video } from 'lucide-react';
 import { cn } from '../lib/utils';
 
 const STATUS_META = {
@@ -36,6 +36,37 @@ function formatDuration(totalSeconds) {
 const JITSI_DOMAIN =
   import.meta.env.VITE_JITSI_DOMAIN?.replace(/^https?:\/\//, '').replace(/\/$/, '') ||
   'jitsi.riot.im';
+
+let jitsiApiScriptPromise;
+
+function loadJitsiApi() {
+  if (window.JitsiMeetExternalAPI) {
+    return Promise.resolve(window.JitsiMeetExternalAPI);
+  }
+
+  if (!jitsiApiScriptPromise) {
+    jitsiApiScriptPromise = new Promise((resolve, reject) => {
+      const script = document.createElement('script');
+      script.src = `https://${JITSI_DOMAIN}/external_api.js`;
+      script.async = true;
+      script.onload = () => {
+        if (window.JitsiMeetExternalAPI) {
+          resolve(window.JitsiMeetExternalAPI);
+        } else {
+          jitsiApiScriptPromise = null;
+          reject(new Error('Jitsi Meet API did not load.'));
+        }
+      };
+      script.onerror = () => {
+        jitsiApiScriptPromise = null;
+        reject(new Error('Could not load the Jitsi Meet API.'));
+      };
+      document.head.appendChild(script);
+    });
+  }
+
+  return jitsiApiScriptPromise;
+}
 
 /**
  * Builds the Jitsi room URL with the local participant's display name baked in.
@@ -80,6 +111,8 @@ export default function VideoConsultation({
   const [elapsed, setElapsed] = useState(() =>
     startedAt ? Math.floor((Date.now() - startedAt) / 1000) : 0
   );
+  const [embedError, setEmbedError] = useState({ roomId: '', message: '' });
+  const roomContainerRef = useRef(null);
 
   useEffect(() => {
     if (!startedAt || status === 'ended') return undefined;
@@ -94,8 +127,65 @@ export default function VideoConsultation({
     return () => window.clearInterval(timer);
   }, [startedAt, status]);
 
+  useEffect(() => {
+    if (status === 'ended' || !roomId || !roomContainerRef.current) {
+      return undefined;
+    }
+
+    let cancelled = false;
+    let jitsiApi;
+
+    loadJitsiApi()
+      .then((JitsiMeetExternalAPI) => {
+        if (cancelled || !roomContainerRef.current) return;
+
+        jitsiApi = new JitsiMeetExternalAPI(JITSI_DOMAIN, {
+          roomName: roomId,
+          parentNode: roomContainerRef.current,
+          width: '100%',
+          height: '100%',
+          userInfo: displayName ? { displayName } : {},
+          configOverwrite: {
+            prejoinPageEnabled: false,
+            prejoinConfig: { enabled: false },
+            enableWelcomePage: false,
+            disableDeepLinking: true,
+          },
+        });
+
+        const iframe = jitsiApi.getIFrame();
+        iframe.setAttribute(
+          'allow',
+          `camera https://${JITSI_DOMAIN}; microphone https://${JITSI_DOMAIN}; autoplay https://${JITSI_DOMAIN}; fullscreen https://${JITSI_DOMAIN}; display-capture https://${JITSI_DOMAIN}`
+        );
+
+        jitsiApi.addListener('errorOccurred', () => {
+          setEmbedError({
+            roomId,
+            message: 'The video room reported an error. Rejoin the call and check camera and microphone access.',
+          });
+        });
+      })
+      .catch((error) => {
+        if (cancelled) return;
+
+        console.error('[video] Failed to initialize the embedded Jitsi room:', error);
+        setEmbedError({
+          roomId,
+          message: 'The embedded video room could not be loaded. Try opening the room in a new tab.',
+        });
+      });
+
+    return () => {
+      cancelled = true;
+      jitsiApi?.dispose();
+      jitsiApi = null;
+    };
+  }, [displayName, roomId, status]);
+
   const meta = STATUS_META[status] ?? STATUS_META.waiting;
   const isEnded = status === 'ended';
+  const visibleError = error || (embedError.roomId === roomId ? embedError.message : '');
 
   return (
     <section className="overflow-hidden rounded-[6px] border border-border bg-surface">
@@ -162,17 +252,17 @@ export default function VideoConsultation({
         </div>
       ) : (
         <>
-          <iframe
-            title={`Jitsi video consultation ${roomId}`}
-            src={buildRoomUrl(roomId, displayName)}
+          <div
+            ref={roomContainerRef}
+            role="region"
+            aria-label={`Jitsi video consultation ${roomId}`}
             style={{
               width: '100%',
               height: '500px',
               border: '1px solid rgb(var(--border))',
               borderRadius: '6px',
+              overflow: 'hidden',
             }}
-            allow="camera; microphone; fullscreen; display-capture"
-            allowFullScreen
           />
 
           <div className="flex flex-col gap-3 border-t border-border bg-surface-muted px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
@@ -181,36 +271,48 @@ export default function VideoConsultation({
               Jitsi Meet room · Camera and microphone access is requested by the browser.
             </p>
 
-            {onEnd && (
-              <button
-                type="button"
-                onClick={onEnd}
-                disabled={ending}
-                className={cn(
-                  'inline-flex h-9 shrink-0 items-center justify-center gap-2 rounded-[6px] border px-3 text-sm font-semibold transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-brand/20',
-                  ending
-                    ? 'border-border bg-surface-strong text-ink-muted'
-                    : 'border-signal-danger-border bg-surface text-signal-danger-ink hover:bg-signal-danger-soft'
-                )}
+            <div className="flex shrink-0 flex-wrap items-center gap-2">
+              <a
+                href={buildRoomUrl(roomId, displayName)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex h-9 items-center justify-center gap-2 rounded-[6px] border border-border-strong bg-surface px-3 text-sm font-medium text-ink transition-colors duration-200 hover:bg-surface-muted focus:outline-none focus:ring-2 focus:ring-brand/20"
               >
-                {ending ? (
-                  <Loader2 aria-hidden="true" className="h-4 w-4 animate-spin" />
-                ) : (
-                  <PhoneOff aria-hidden="true" className="h-4 w-4" />
-                )}
-                {ending ? 'Ending…' : 'End call'}
-              </button>
-            )}
+                <ExternalLink aria-hidden="true" className="h-4 w-4" />
+                Open room in new tab
+              </a>
+
+              {onEnd && (
+                <button
+                  type="button"
+                  onClick={onEnd}
+                  disabled={ending}
+                  className={cn(
+                    'inline-flex h-9 shrink-0 items-center justify-center gap-2 rounded-[6px] border px-3 text-sm font-semibold transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-brand/20',
+                    ending
+                      ? 'border-border bg-surface-strong text-ink-muted'
+                      : 'border-signal-danger-border bg-surface text-signal-danger-ink hover:bg-signal-danger-soft'
+                  )}
+                >
+                  {ending ? (
+                    <Loader2 aria-hidden="true" className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <PhoneOff aria-hidden="true" className="h-4 w-4" />
+                  )}
+                  {ending ? 'Ending…' : 'End call'}
+                </button>
+              )}
+            </div>
           </div>
         </>
       )}
 
-      {error && (
+      {visibleError && (
         <p
           role="alert"
           className="border-t border-signal-danger-border bg-signal-danger-soft px-5 py-3 text-[13px] font-medium text-signal-danger-ink"
         >
-          {error}
+          {visibleError}
         </p>
       )}
     </section>

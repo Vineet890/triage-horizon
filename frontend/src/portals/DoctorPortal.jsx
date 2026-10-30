@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import {
   Activity,
   AlertCircle,
+  Bell,
   CheckCircle2,
   ClipboardList,
   Clock3,
@@ -43,7 +44,10 @@ import AcuityBadge from '../components/AcuityBadge';
 import AgentTrace from '../components/AgentTrace';
 import ClinicalCard from '../components/ClinicalCard';
 import EncounterRail from '../components/EncounterRail';
+import NotificationPanel from '../components/NotificationPanel';
 import PortalHeader from '../components/PortalHeader';
+import SymptomDetailModal from '../components/SymptomDetailModal';
+import TriageNotificationPopup from '../components/TriageNotificationPopup';
 import VideoConsultation from '../components/VideoConsultation';
 
 const VITAL_ICONS = {
@@ -905,6 +909,12 @@ export default function DoctorPortal() {
   const addTriageEvent = useTriageStore((state) => state.addTriageEvent);
   const setEncounters = useTriageStore((state) => state.setEncounters);
   const upsertEncounter = useTriageStore((state) => state.upsertEncounter);
+  const triageNotifications = useTriageStore(
+    (state) => state.triageNotifications
+  );
+  const addTriageNotification = useTriageStore(
+    (state) => state.addTriageNotification
+  );
   const agentTrace = useTriageStore((state) => state.agentTrace);
   const agentTraceEncounterId = useTriageStore(
     (state) => state.agentTraceEncounterId
@@ -914,7 +924,24 @@ export default function DoctorPortal() {
   const doctorName = auth?.name || 'Dr. Mira Sen';
   const doctorSpecialty = auth?.specialty || 'Emergency Medicine';
 
+  const [notificationPanelOpen, setNotificationPanelOpen] = useState(false);
+  const [selectedModalNotification, setSelectedModalNotification] = useState(null);
+
+  const unreadNotificationsCount = useMemo(
+    () => triageNotifications.filter((n) => !n.read).length,
+    [triageNotifications]
+  );
+
   const [selectedId, setSelectedId] = useState('');
+
+  const handleSelectPatientFromNotification = (patientId) => {
+    if (!patientId) return;
+    setSelectedId(patientId);
+  };
+
+  const handleOpenSymptomModal = (notification) => {
+    setSelectedModalNotification(notification);
+  };
   const [newIds, setNewIds] = useState(() => new Set());
   const highlightTimers = useRef(new Map());
   const [handoff, setHandoff] = useState(null);
@@ -1071,6 +1098,8 @@ export default function DoctorPortal() {
     const handleTriageComplete = (payload) => {
       if (!payload?.patient_id) return;
 
+      addTriageNotification(payload);
+
       setNewIds((previous) => new Set(previous).add(payload.patient_id));
 
       const existing = timers.get(payload.patient_id);
@@ -1095,7 +1124,7 @@ export default function DoctorPortal() {
       timers.forEach((timer) => window.clearTimeout(timer));
       timers.clear();
     };
-  }, []);
+  }, [addTriageNotification]);
 
   useEffect(() => {
     const handleCallInitiated = (payload) => {
@@ -1194,7 +1223,10 @@ export default function DoctorPortal() {
       const { data } = await api.post('/triage/demo-seed');
       const seeded = data.encounters ?? [];
 
-      seeded.forEach((encounter) => addTriageEvent(encounter));
+      seeded.forEach((encounter) => {
+        addTriageEvent(encounter);
+        addTriageNotification(encounter);
+      });
 
       const critical = seeded.find(
         (encounter) => encounter.acuity === 'CRITICAL'
@@ -1425,7 +1457,29 @@ export default function DoctorPortal() {
         roleLabel="Physician command"
         userName={doctorName}
         homePath="/doctor"
-      />
+      >
+        <button
+          type="button"
+          onClick={() => setNotificationPanelOpen((prev) => !prev)}
+          aria-label={`Triage notifications${unreadNotificationsCount > 0 ? `, ${unreadNotificationsCount} unread` : ''}`}
+          aria-expanded={notificationPanelOpen}
+          className="relative inline-flex h-9 items-center justify-center gap-1.5 rounded-[6px] border border-forest-border bg-white/5 px-2.5 text-sm font-medium text-forest-ink transition-colors duration-200 hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-brand/30 sm:px-3"
+        >
+          <Bell
+            aria-hidden="true"
+            className={cn(
+              'h-4 w-4',
+              unreadNotificationsCount > 0 && 'text-forest-accent animate-pulse'
+            )}
+          />
+          <span className="hidden sm:inline">Alerts</span>
+          {unreadNotificationsCount > 0 && (
+            <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-signal-danger px-1.5 text-[10px] font-bold text-white shadow-xs">
+              {unreadNotificationsCount}
+            </span>
+          )}
+        </button>
+      </PortalHeader>
 
       <main className="mx-auto w-full max-w-[1500px] px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
         <div className="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
@@ -1442,7 +1496,7 @@ export default function DoctorPortal() {
             </p>
           </div>
 
-          <div className="grid grid-cols-3 gap-px overflow-hidden rounded-[6px] border border-border bg-border">
+          <div className="grid grid-cols-2 gap-px overflow-hidden rounded-[6px] border border-border bg-border sm:grid-cols-4">
             <Metric label="In queue" value={sortedQueue.length} detail="Live cases" />
             <Metric
               label="Critical"
@@ -1450,6 +1504,31 @@ export default function DoctorPortal() {
               detail="Immediate priority"
               tone="critical"
             />
+            <button
+              type="button"
+              onClick={() => setNotificationPanelOpen(true)}
+              className="bg-surface px-4 py-3 text-left transition-colors hover:bg-surface-muted focus:outline-none focus:ring-2 focus:ring-brand/30 group"
+            >
+              <p className="font-mono text-[9px] font-semibold uppercase tracking-[0.14em] text-ink-muted flex items-center justify-between">
+                <span>Triage Alerts</span>
+                {unreadNotificationsCount > 0 && (
+                  <span className="h-1.5 w-1.5 rounded-full bg-signal-danger animate-ping" />
+                )}
+              </p>
+              <p
+                className={cn(
+                  'th-tabular mt-1 font-mono text-xl font-semibold leading-none tracking-[-0.02em] flex items-center gap-1.5',
+                  unreadNotificationsCount > 0 ? 'text-signal-high-ink' : 'text-ink'
+                )}
+              >
+                <Bell className="h-4 w-4" />
+                {unreadNotificationsCount}
+                <span className="text-xs font-normal text-ink-muted">unread</span>
+              </p>
+              <p className="mt-1.5 text-[10px] leading-4 text-brand-strong group-hover:underline">
+                Open panel →
+              </p>
+            </button>
             <div className="bg-surface px-4 py-3">
               <p className="font-mono text-[9px] font-semibold uppercase tracking-[0.14em] text-ink-muted">
                 Feed
@@ -1847,6 +1926,28 @@ export default function DoctorPortal() {
           </div>
         </div>
       </main>
+
+      {/* Live Triage Pop-up Toast */}
+      <TriageNotificationPopup
+        onSelectPatient={handleSelectPatientFromNotification}
+        onOpenDetails={handleOpenSymptomModal}
+      />
+
+      {/* Triage Notifications Flyout Panel */}
+      <NotificationPanel
+        isOpen={notificationPanelOpen}
+        onClose={() => setNotificationPanelOpen(false)}
+        onSelectPatient={handleSelectPatientFromNotification}
+        onOpenDetails={handleOpenSymptomModal}
+      />
+
+      {/* Detailed Exact Symptom Pop-up Modal */}
+      <SymptomDetailModal
+        isOpen={Boolean(selectedModalNotification)}
+        notification={selectedModalNotification}
+        onClose={() => setSelectedModalNotification(null)}
+        onSelectPatient={handleSelectPatientFromNotification}
+      />
     </div>
   );
 }
