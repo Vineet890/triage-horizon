@@ -13,6 +13,8 @@ import videoRoutes from './routes/video.routes.js';
 import handoffRoutes from './routes/handoff.routes.js';
 import analyticsRoutes from './routes/analytics.routes.js';
 import encountersRoutes from './routes/encounters.routes.js';
+import medicationsRoutes from './routes/medications.routes.js';
+import { runMedicationReminderSweep } from './services/medicationPlanStore.js';
 
 const app = express();
 
@@ -37,6 +39,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/facilities', facilitiesRoutes);
 app.use('/api/triage', triageRoutes);
 app.use('/api/encounters', encountersRoutes);
+app.use('/api/medications', medicationsRoutes);
 app.use('/api/video', videoRoutes);
 app.use('/api/handoff', handoffRoutes);
 app.use('/api/analytics', analyticsRoutes);
@@ -62,6 +65,16 @@ async function startServer() {
   httpServer.listen(PORT, () => {
     console.log(`[server] Triage Horizon backend listening on port ${PORT}`);
   });
+
+  const sweepMedicationReminders = () => {
+    runMedicationReminderSweep().catch((error) => {
+      console.error('[medications] Reminder sweep failed:', error);
+    });
+  };
+  sweepMedicationReminders();
+
+  const reminderTimer = setInterval(sweepMedicationReminders, 30_000);
+  reminderTimer.unref();
 }
 
 startServer();

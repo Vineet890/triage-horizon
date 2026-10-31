@@ -45,6 +45,12 @@ Located at `Triage Horizon/frontend`, alongside the Express API in
   selected facility in bold and the declined facilities with reasons. When
   `ROUTE_UPDATED` arrives, an amber banner explains the outage for two seconds
   before the selected facility, ETA and distance animate to the new route.
+- **Medication adherence** — the patient can review each dose time, mark doses
+  taken, and share plain-language adherence and assessment updates with the
+  doctor in real time. The medicine list can be downloaded as a PDF receipt with
+  dose times and prescriber names. Browser push reminders can arrive while the
+  portal is closed after the patient enables them and the backend is configured
+  with VAPID keys.
 - **Doctor portal** — data-dense queue table sorted CRITICAL first, handoff
   record with presenting complaint, synthetic vitals, history and recommended
   actions, plus an e-prescription form wired to `/api/handoff/prescription`.
@@ -62,28 +68,38 @@ Located at `Triage Horizon/frontend`, alongside the Express API in
 
 ## Run
 
-Two processes are required. Start the API first, from the repository root:
+Install frontend dependencies once:
 
 ```bash
-cd server
-node src/server.js
+cd frontend
+npm install
 ```
 
-Then start this client, from `frontend`:
+To see backend logs in their own VS Code terminal, open two terminals.
 
-```bash
-npm install
+Open both terminals at the repository root (`Triage Horizon`).
+
+**Terminal 1 — backend:**
+
+```powershell
+cd server
 npm run dev
 ```
 
-Open [http://localhost:5173](http://localhost:5173).
+Wait for `Triage Horizon backend listening on port 5000`.
 
-If a port is already taken (`EADDRINUSE`), something is already listening —
-check it instead of starting a second copy:
+**Terminal 2 — frontend:**
 
 ```powershell
-Get-NetTCPConnection -LocalPort 5000,5173 -State Listen | Select-Object LocalPort, OwningProcess
+cd frontend
+npm run dev
 ```
+
+The frontend launcher reuses the backend already running on port 5000 and
+starts Vite on port 5173. Open [http://localhost:5173](http://localhost:5173).
+Alternatively, run only `npm run dev` in `frontend`; it starts both services
+together and displays their logs in that terminal. If a port is already in use
+by another application, the launcher reports which port is occupied.
 
 ## Demo accounts
 
@@ -107,11 +123,13 @@ shocking after a single patient submission targets that patient's facility.
 
 ## Configuration
 
-The Vite development server proxies `/api` and Socket.IO traffic to the backend
-on port 5000. Start the backend and frontend locally, then forward/open the
-frontend port (5173); the backend port does not need to be exposed separately.
-GitHub Codespaces forwarded hostnames are allowed by the dev server, so this
-works without deploying the backend.
+The Vite development server listens on all network interfaces at port 5173 and
+proxies `/api` and Socket.IO traffic to the backend on port 5000. Start the
+backend and frontend, then forward/open port **5173** in the editor. To access
+the app from another device, set that forwarded port's visibility to **Public**
+or sign in with an account that can access the private forward. The backend
+port does not need to be forwarded or deployed. GitHub Codespaces and VS Code
+Dev Tunnels hostnames are allowed by the dev server.
 Video calls use Jitsi's supported IFrame API, separately from the forwarded
 backend API, so the embedded room receives the required camera, microphone,
 autoplay, and display-capture permissions. If the embedded room disconnects on
@@ -127,6 +145,16 @@ VITE_API_ORIGIN=https://<backend-forwarded-origin>
 
 Use the actual backend origin without a trailing slash. Leave the value empty
 to use the built-in Vite proxy.
+
+To enable medication push reminders, configure `VAPID_PUBLIC_KEY`,
+`VAPID_PRIVATE_KEY`, and `VAPID_SUBJECT` in `server/.env`. Generate a key pair
+from the `server` folder with `npx web-push generate-vapid-keys --json`, then
+restart the backend. The patient must allow notifications in their browser.
+Without VAPID keys, dose logging and live doctor activity still work, but
+closed-tab reminders are unavailable. Keep the backend running for scheduled
+delivery; MongoDB is needed to preserve schedules, dose history, and push
+subscriptions across backend restarts. The local in-memory fallback resets
+when the backend process stops.
 
 ## Checks
 

@@ -19,7 +19,7 @@ export default function ThemeToggle({ tone = 'surface', className = '' }) {
       aria-label={`Switch to ${nextLabel} theme`}
       title={`Switch to ${nextLabel} theme`}
       className={cn(
-        'grid h-9 w-9 shrink-0 place-items-center rounded-[6px] border transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-brand/30',
+        'grid h-9 w-9 shrink-0 place-items-center rounded-xl border transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-brand/30',
         tone === 'forest'
           ? 'border-forest-border bg-white/5 text-forest-muted hover:bg-white/10 hover:text-forest-ink'
           : 'border-border bg-surface text-ink-secondary hover:bg-surface-muted hover:text-ink',

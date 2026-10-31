@@ -3,16 +3,15 @@ import { clearSession, readSession, writeSession } from '../lib/session';
 import { applyTheme, readTheme, writeTheme } from '../lib/theme';
 import { PATIENT_DIRECTORY } from '../lib/demoPatients';
 import { playTriageChime } from '../lib/sound';
+import { ACTIVE_ENCOUNTER_STATUSES } from '../lib/encounterStatus';
+import {
+  applyRouteUpdateToEncounters,
+  createRouteToast,
+  mergeRouteUpdateIntoEntry,
+} from '../lib/routeUpdates';
 
 const ROUTE_UPDATE_LIMIT = 24;
-
-export const ACTIVE_ENCOUNTER_STATUSES = [
-  'TRIAGED',
-  'ROUTING',
-  'AWAITING_ACCEPTANCE',
-  'ACCEPTED',
-  'EN_ROUTE',
-];
+export { ACTIVE_ENCOUNTER_STATUSES };
 
 const ACTIVE_STATUS_SET = new Set(ACTIVE_ENCOUNTER_STATUSES);
 
@@ -58,18 +57,7 @@ function createNotificationItem(payload, defaultRead = false) {
 }
 
 function mergeRoute(entry, payload) {
-  if (entry.patient_id !== payload.patient_id) return entry;
-
-  return {
-    ...entry,
-    selected_facility:
-      payload.selected_facility !== undefined
-        ? payload.selected_facility
-        : entry.selected_facility,
-    route_update: payload,
-    rerouted_at: payload.rerouted_at,
-    reroute_status: payload.reroute_status,
-  };
+  return mergeRouteUpdateIntoEntry(entry, payload);
 }
 
 function encounterFrom(payload) {
@@ -169,8 +157,8 @@ function mergePrescriptionNotifications(existing, incoming, defaultRead) {
 function mergeTriageResult(result, encounter) {
   if (!result || !encounter) return result;
   if (
-    result.patient_id !== encounter.patient_id &&
-    result.encounter_id !== encounter.id
+    result.patient_id !== encounter.patient_id ||
+    (result.encounter_id && result.encounter_id !== encounter.id)
   ) {
     return result;
   }
@@ -224,6 +212,7 @@ export const useTriageStore = create((set, get) => ({
   prescriptions: [],
   prescriptionNotifications: [],
   prescriptionToast: null,
+  prescriptionPdfModal: null,
   triageNotifications: [],
   triageToast: null,
   notificationSoundEnabled: true,
@@ -437,39 +426,19 @@ export const useTriageStore = create((set, get) => ({
     set((state) => {
       if (!payload?.patient_id) return state;
 
-      const encounters = state.encounters.map((encounter) => {
-        if (
-          encounter.patient_id !== payload.patient_id ||
-          !ACTIVE_STATUS_SET.has(encounter.status)
-        ) {
-          return encounter;
-        }
-
-        const selectedFacility = payload.selected_facility
-          ? {
-              ...(encounter.selected_facility ?? {}),
-              ...payload.selected_facility,
-            }
-          : null;
-
-        return {
-          ...encounter,
-          status: 'ROUTING',
-          facility_id: payload.selected_facility?.id ?? null,
-          facility_name: payload.selected_facility?.name ?? 'Manual care coordination',
-          facility_snapshot: selectedFacility,
-          selected_facility: selectedFacility,
-          route_update: payload,
-        };
-      });
-
-      const updatedEncounter = encounters.find(
-        (encounter) => encounter.patient_id === payload.patient_id
+      const { encounters, updatedEncounter } = applyRouteUpdateToEncounters(
+        state.encounters,
+        payload
       );
 
       let triageResult = state.triageResult;
 
-      if (triageResult?.patient_id === payload.patient_id) {
+      if (
+        triageResult?.patient_id === payload.patient_id &&
+        (!payload.encounter_id ||
+          (triageResult.encounter_id ?? triageResult.encounter?.id) ===
+            payload.encounter_id)
+      ) {
         triageResult = mergeTriageResult(
           {
             ...triageResult,
@@ -493,17 +462,7 @@ export const useTriageStore = create((set, get) => ({
           (state.activeEncounterId
             ? state.activeEncounterId
             : state.encounters[0]?.id ?? null),
-        routeToast: {
-          id: `${payload.patient_id}-${payload.rerouted_at ?? Date.now()}`,
-          patient_id: payload.patient_id,
-          facility_name:
-            payload.selected_facility?.name ??
-            (payload.reroute_status === 'NO_ALTERNATIVE_AVAILABLE'
-              ? 'manual care coordination'
-              : 'an alternate facility'),
-          reason: payload.reason ?? '',
-          rerouted_at: payload.rerouted_at ?? new Date().toISOString(),
-        },
+        routeToast: createRouteToast(payload),
       };
     }),
 
@@ -548,6 +507,11 @@ export const useTriageStore = create((set, get) => ({
     }),
 
   dismissPrescriptionToast: () => set({ prescriptionToast: null }),
+
+  openPrescriptionPdfModal: (prescription) =>
+    set({ prescriptionPdfModal: prescription ?? null }),
+
+  closePrescriptionPdfModal: () => set({ prescriptionPdfModal: null }),
 
   markPrescriptionNotificationRead: (id) =>
     set((state) => ({
@@ -660,6 +624,7 @@ export const useTriageStore = create((set, get) => ({
       prescriptions: [],
       prescriptionNotifications: [],
       prescriptionToast: null,
+      prescriptionPdfModal: null,
       triageNotifications: [],
       triageToast: null,
     });

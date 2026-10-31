@@ -47,11 +47,14 @@ export default function RouteToast() {
                   <span className="font-medium text-ink">
                     {patientName(routeToast.patient_id)}
                   </span>{' '}
-                  rerouted to{' '}
+                  rerouted
+                  {routeToast.previous_facility_name
+                    ? ` from ${routeToast.previous_facility_name} to `
+                    : ' to '}
                   <span className="font-medium text-ink">
                     {routeToast.facility_name}
                   </span>
-                  .
+                  {routeToast.reason ? `: ${routeToast.reason}` : '.'}
                 </p>
                 <p className="mt-1.5 font-mono text-xs text-ink-muted">
                   LIVE NETWORK UPDATE · {routeToast.patient_id.toUpperCase()}

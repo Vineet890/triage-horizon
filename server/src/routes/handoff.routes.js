@@ -16,6 +16,7 @@ import {
   emitToPatient,
   getIO,
 } from '../socket.js';
+import { getMedicationPlan } from '../services/medicationPlanStore.js';
 
 const router = express.Router();
 
@@ -186,6 +187,7 @@ router.get(
       const encounter =
         (await findActiveByPatient(patient.id)) ??
         (await findLatestByPatient(patient.id));
+      const medicationPlan = await getMedicationPlan(patient.id);
 
       const demoResponses = readJson(DEMO_RESPONSES_PATH);
       const fixture = demoResponses[patient.id] ?? null;
@@ -209,6 +211,7 @@ router.get(
         agent_rationale: encounter?.agent_rationale ?? [],
         agent_trace: encounter?.agent_trace ?? [],
         timeline: encounter?.timeline ?? [],
+        medication_activity: (medicationPlan?.dose_events ?? []).slice(-12),
         assigned_doctor_id: encounter?.assigned_doctor_id ?? null,
         assigned_doctor_name: encounter?.assigned_doctor_name ?? null,
         prescription: encounter?.prescription ?? null,

@@ -1,0 +1,7 @@
+export const ACTIVE_ENCOUNTER_STATUSES = [
+  'TRIAGED',
+  'ROUTING',
+  'AWAITING_ACCEPTANCE',
+  'ACCEPTED',
+  'EN_ROUTE',
+];

@@ -8,7 +8,7 @@ import {
   closeActiveForPatient,
   createEncounter,
 } from '../services/encounterStore.js';
-import { evaluateTriage } from '../services/triageEngine.js';
+import { assessPatientSymptoms } from '../services/triageAssessment.js';
 import { getIO } from '../socket.js';
 
 const router = express.Router();
@@ -28,6 +28,7 @@ function readJson(filePath) {
 function buildEncounterPayload({ patient, decision, source }) {
   const timestamp = new Date().toISOString();
   const facility = decision.selected_facility ?? null;
+  const facilityName = facility?.name ?? 'Manual care coordination';
 
   return {
     patient_id: patient.id,
@@ -37,7 +38,7 @@ function buildEncounterPayload({ patient, decision, source }) {
     care_tier: decision.care_tier,
     status: 'TRIAGED',
     facility_id: facility?.id ?? null,
-    facility_name: facility?.name ?? null,
+    facility_name: facilityName,
     facility_snapshot: facility,
     assigned_doctor_id: null,
     assigned_doctor_name: null,
@@ -55,6 +56,16 @@ function buildEncounterPayload({ patient, decision, source }) {
         actor: 'Triage Agent',
         action: `Triaged ${decision.acuity} · ${decision.protocol_matched}`,
       },
+      ...(decision.model_fallback
+        ? [
+            {
+              timestamp,
+              actor: 'Triage Service',
+              action:
+                'Live triage model unavailable; deterministic assessment used.',
+            },
+          ]
+        : []),
     ],
     prescription: null,
     risk_modifiers: decision.risk_modifiers,
@@ -113,9 +124,19 @@ function emitLegacyTriage(io, encounter) {
   io.to('role:DOCTOR').to('role:ADMIN').emit('TRIAGE_COMPLETE', payload);
 }
 
-async function submitForPatient({ patientId, fallbackName, symptom, source }) {
+async function submitForPatient({
+  patientId,
+  fallbackName,
+  symptom,
+  source,
+  useLiveModel = false,
+}) {
   const patient = await loadPatientProfile(patientId, fallbackName);
-  const decision = evaluateTriage({ patient, symptom });
+  const { decision, modelFallback } = await assessPatientSymptoms({
+    patient,
+    symptom,
+    useLiveModel,
+  });
 
   const closedEncounters = await closeActiveForPatient(
     patient.id,
@@ -127,13 +148,19 @@ async function submitForPatient({ patientId, fallbackName, symptom, source }) {
     buildEncounterPayload({ patient, decision, source })
   );
 
-  return { patient, decision, encounter, closedEncounters };
+  return {
+    patient,
+    decision,
+    encounter,
+    closedEncounters,
+    modelFallback,
+  };
 }
 
 /**
  * POST /api/triage/submit
- * The patient identity is derived from the JWT. Mock mode uses the
- * deterministic engine; live mode is not wired to an LLM yet.
+ * The patient identity is derived from the JWT. Live mode adds model evidence
+ * while deterministic safety rules and facility routing stay in control.
  */
 router.post(
   '/submit',
@@ -150,18 +177,17 @@ router.post(
       return res.status(400).json({ error: 'symptom_text is required' });
     }
 
-    if (USE_LIVE_LLM) {
-      return res.status(501).json({
-        error: 'Live LLM mode is enabled but not implemented yet',
-        use_live_llm: true,
-      });
-    }
-
     try {
-      const { decision, encounter, closedEncounters } = await submitForPatient({
+      const {
+        decision,
+        encounter,
+        closedEncounters,
+        modelFallback,
+      } = await submitForPatient({
         patientId: req.user.userId,
         symptom: symptom_text.trim(),
         source: 'live',
+        useLiveModel: USE_LIVE_LLM,
       });
 
       const io = getIO();
@@ -176,6 +202,7 @@ router.post(
 
       return res.status(200).json({
         ...decision,
+        model_fallback: modelFallback,
         encounter_id: encounter.id,
         encounter,
         status: encounter.status,

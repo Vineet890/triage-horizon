@@ -75,6 +75,12 @@ function sortNewestFirst(records) {
 function matchesFilter(record, filter = {}) {
   if (filter.patient_id && record.patient_id !== filter.patient_id) return false;
   if (filter.facility_id && record.facility_id !== filter.facility_id) return false;
+  if (
+    filter.assigned_doctor_id &&
+    record.assigned_doctor_id !== filter.assigned_doctor_id
+  ) {
+    return false;
+  }
 
   if (filter.activeOnly && !ACTIVE_STATUSES.includes(record.status)) {
     return false;
@@ -101,6 +107,9 @@ function buildMongoFilter(filter = {}) {
 
   if (filter.patient_id) query.patient_id = filter.patient_id;
   if (filter.facility_id) query.facility_id = filter.facility_id;
+  if (filter.assigned_doctor_id) {
+    query.assigned_doctor_id = filter.assigned_doctor_id;
+  }
 
   if (filter.activeOnly) {
     query.status = { $in: ACTIVE_STATUSES };

@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -8,160 +8,159 @@
   :root {
     color-scheme: light;
 
-    /* Core surfaces. RGB triplets let Tailwind apply opacity modifiers. */
-    --canvas: 246 244 238;
-    --surface: 255 253 248;
-    --surface-muted: 240 237 228;
-    --surface-strong: 233 229 218;
-    --border: 221 216 204;
-    --border-strong: 201 194 178;
+    /* Core surfaces: Crisp Modern Clinical Whitish & Soft Pastel Mint / Sage */
+    --canvas: 250 252 250;
+    --surface: 255 255 255;
+    --surface-muted: 242 248 244;
+    --surface-strong: 230 240 234;
+    --border: 224 237 229;
+    --border-strong: 198 220 207;
 
-    /* Text */
-    --ink: 17 32 28;
-    --ink-secondary: 77 90 84;
-    --ink-muted: 94 106 99;
-    --ink-faint: 124 135 127;
+    /* Text: Deep Sage Forest & Charcoal Ink */
+    --ink: 24 44 35;
+    --ink-secondary: 52 79 67;
+    --ink-muted: 94 125 110;
+    --ink-faint: 142 168 155;
 
-    /* Brand */
-    --brand-rgb: 13 148 136;
-    --brand: rgb(var(--brand-rgb));
-    --brand-strong: #0f766e;
-    --brand-soft: #e6f4f1;
-    --brand-border: #c8e6df;
-    --brand-solid: #0f766e;
-    --brand-solid-hover: #115e59;
+    /* Brand: Pastely Sage Green Palette from Logo (#3D6B56 & #82AF96) */
+    --brand-rgb: 61 107 86;
+    --brand: #3D6B56;
+    --brand-strong: #2D5241;
+    --brand-soft: #EFF7F2;
+    --brand-border: #C2DECF;
+    --brand-solid: #3D6B56;
+    --brand-solid-hover: #315745;
     --on-brand: #ffffff;
 
-    /* Deep forest chrome: sidebar, header, brand mark */
-    --forest: #0b1b18;
-    --forest-2: #10241f;
-    --forest-ink: #f3f7f5;
-    --forest-muted: #a9bdb6;
-    --forest-faint: #7e958e;
-    --forest-border: #1e352e;
-    --forest-active: #143a33;
-    --forest-accent: #5eead4;
-    --mark-bg: #0b1b18;
-    --mark-ink: #5eead4;
+    /* Deep forest & sage chrome: sidebar, header, brand mark */
+    --forest: #172820;
+    --forest-2: #1E342A;
+    --forest-ink: #F4FAF6;
+    --forest-muted: #9BB8A9;
+    --forest-faint: #6D8F7F;
+    --forest-border: #2B4538;
+    --forest-active: #274336;
+    --forest-accent: #82AF96;
+    --mark-bg: #172820;
+    --mark-ink: #82AF96;
 
-    /* Encounter rail: complete = green, active = teal, pending = gray */
-    --rail-complete: #16a34a;
-    --rail-active: #0d9488;
-    --rail-pending: #6b766f;
-    --rail-line: #e2ddd1;
+    /* Encounter rail: complete = sage green, active = brand, pending = soft sage */
+    --rail-complete: #56A078;
+    --rail-active: #3D6B56;
+    --rail-pending: #9BB8A9;
+    --rail-line: #E0EDE5;
 
-    /* Semantic signals */
-    --amber: #ca8a04;
-    --amber-ink: #854d0e;
-    --amber-soft: #fdf6e3;
-    --amber-border: #ecd9a4;
+    /* Semantic signals: High-visibility clinical alerts */
+    --amber: #f59e0b;
+    --amber-ink: #b45309;
+    --amber-soft: #fefce8;
+    --amber-border: #fef08a;
     --high: #ea580c;
-    --high-ink: #9a3412;
-    --high-soft: #fff3e8;
-    --high-border: #f4cfae;
-    --danger: #dc2626;
-    --danger-ink: #b91c1c;
-    --danger-soft: #fdf0ee;
-    --danger-border: #f0c5c1;
-    --danger-solid: #b91c1c;
-    --danger-solid-hover: #991b1b;
-    --success: #16a34a;
-    --success-ink: #15803d;
-    --success-soft: #edf8f0;
-    --success-border: #b9e3c5;
+    --high-ink: #c2410c;
+    --high-soft: #fff7ed;
+    --high-border: #fed7aa;
+    --danger: #e11d48;
+    --danger-ink: #be123c;
+    --danger-soft: #fff1f2;
+    --danger-border: #fecdd3;
+    --danger-solid: #e11d48;
+    --danger-solid-hover: #be123c;
+    --success: #478F66;
+    --success-ink: #275C40;
+    --success-soft: #EFF8F3;
+    --success-border: #BCE2CB;
 
     /* Data visualisation */
-    --chart-grid: #e2ddd1;
-    --chart-axis: #6b766f;
+    --chart-grid: #E0EDE5;
+    --chart-axis: #6D8F7F;
   }
 
   .dark {
     color-scheme: dark;
 
-    --canvas: 9 18 15;
-    --surface: 15 28 24;
-    --surface-muted: 11 22 19;
-    --surface-strong: 23 39 32;
-    --border: 36 56 47;
-    --border-strong: 51 76 65;
+    --canvas: 14 22 18;
+    --surface: 19 31 25;
+    --surface-muted: 15 25 20;
+    --surface-strong: 28 44 36;
+    --border: 29 46 38;
+    --border-strong: 44 68 56;
 
-    --ink: 237 243 239;
-    --ink-secondary: 195 208 201;
-    --ink-muted: 157 176 167;
-    --ink-faint: 126 147 138;
+    --ink: 242 248 244;
+    --ink-secondary: 218 233 225;
+    --ink-muted: 144 172 158;
+    --ink-faint: 98 126 112;
 
-    --brand-rgb: 45 212 191;
-    --brand: rgb(var(--brand-rgb));
-    --brand-strong: #5eead4;
-    --brand-soft: #0e2e28;
-    --brand-border: #1b4a40;
-    --brand-solid: #0f766e;
-    --brand-solid-hover: #115e59;
+    --brand-rgb: 130 175 150;
+    --brand: #82AF96;
+    --brand-strong: #A3C9B4;
+    --brand-soft: #182B22;
+    --brand-border: #2A4738;
+    --brand-solid: #4D7E66;
+    --brand-solid-hover: #5A8F75;
     --on-brand: #ffffff;
 
-    --forest: #060e0c;
-    --forest-2: #0b1b18;
-    --forest-ink: #f3f7f5;
-    --forest-muted: #a9bdb6;
-    --forest-faint: #7e958e;
-    --forest-border: #1b3029;
-    --forest-active: #123a33;
-    --forest-accent: #5eead4;
-    --mark-bg: #0b1b18;
-    --mark-ink: #5eead4;
+    --forest: #0D1612;
+    --forest-2: #13201A;
+    --forest-ink: #F4FAF6;
+    --forest-muted: #9BB8A9;
+    --forest-faint: #6D8F7F;
+    --forest-border: #23392E;
+    --forest-active: #1F352B;
+    --forest-accent: #82AF96;
+    --mark-bg: #0D1612;
+    --mark-ink: #82AF96;
 
-    --rail-complete: #22c55e;
-    --rail-active: #14b8a6;
-    --rail-pending: #8fa69f;
-    --rail-line: #24382f;
+    --rail-complete: #56A078;
+    --rail-active: #82AF96;
+    --rail-pending: #6D8F7F;
+    --rail-line: #23392E;
 
     --amber: #fbbf24;
     --amber-ink: #fde68a;
-    --amber-soft: #3a2708;
-    --amber-border: #6b4a0e;
+    --amber-soft: #3b2408;
+    --amber-border: #78350f;
     --high: #fb923c;
-    --high-ink: #fdba74;
-    --high-soft: #3a1c08;
-    --high-border: #6e3510;
+    --high-ink: #fed7aa;
+    --high-soft: #3c1a08;
+    --high-border: #7c2d12;
     --danger: #f87171;
-    --danger-ink: #fca5a5;
-    --danger-soft: #3a1212;
-    --danger-border: #6e2020;
-    --danger-solid: #b91c1c;
-    --danger-solid-hover: #991b1b;
-    --success: #4ade80;
-    --success-ink: #86efac;
-    --success-soft: #0a2a16;
-    --success-border: #1e5a34;
+    --danger-ink: #fecaca;
+    --danger-soft: #3c0c0c;
+    --danger-border: #7f1d1d;
+    --danger-solid: #dc2626;
+    --danger-solid-hover: #b91c1c;
+    --success: #34d399;
+    --success-ink: #a7f3d0;
+    --success-soft: #062b1a;
+    --success-border: #065f46;
 
-    --chart-grid: #24382f;
-    --chart-axis: #9db0a7;
+    --chart-grid: #1e293b;
+    --chart-axis: #94a3b8;
   }
 
-  /* Public marketing and authentication surfaces stay on warm paper even when
-     the saved portal preference is dark. */
+  /* Public marketing and landing surface: crisp modern clinical gradient canvas */
   .marketing {
     color-scheme: light;
 
-    --canvas: 246 244 238;
-    --surface: 255 253 248;
-    --surface-muted: 239 235 226;
-    --surface-strong: 233 228 217;
-    --border: 221 216 204;
-    --border-strong: 207 200 184;
+    --canvas: 248 250 252;
+    --surface: 255 255 255;
+    --surface-muted: 241 245 249;
+    --surface-strong: 226 232 240;
+    --border: 226 232 240;
+    --border-strong: 203 213 225;
 
-    --ink: 17 32 28;
-    --ink-secondary: 77 90 84;
-    --ink-muted: 107 118 111;
-    --ink-faint: 154 159 149;
+    --ink: 15 23 42;
+    --ink-secondary: 51 65 85;
+    --ink-muted: 100 116 139;
+    --ink-faint: 148 163 184;
 
     --brand-rgb: 13 148 136;
     --brand: #0d9488;
     --brand-strong: #0f766e;
-    --brand-soft: #e6f4f1;
-    --brand-border: #c8e6df;
-    --brand-solid: #0f766e;
-    --brand-solid-hover: #115e59;
+    --brand-soft: #f0fdfa;
+    --brand-border: #99f6e4;
+    --brand-solid: #0d9488;
+    --brand-solid-hover: #0f766e;
     --on-brand: #ffffff;
 
     background-color: rgb(var(--canvas));
@@ -179,7 +178,7 @@
     min-height: 100vh;
     background-color: rgb(var(--canvas));
     color: rgb(var(--ink));
-    font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
+    font-family: 'Plus Jakarta Sans', 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
     font-size: 16px;
     line-height: 1.6;
     -webkit-font-smoothing: antialiased;
@@ -187,133 +186,72 @@
     text-rendering: optimizeLegibility;
   }
 
-  input,
-  select,
-  textarea,
-  button {
-    font-family: inherit;
-    font-size: inherit;
-  }
-
-  button {
-    cursor: pointer;
-  }
-
-  button:disabled {
-    cursor: not-allowed;
-  }
-
-  small {
-    font-size: 14px;
-  }
-
   ::selection {
-    background-color: color-mix(in srgb, var(--brand) 24%, transparent);
-    color: rgb(var(--ink));
-  }
-
-  *:focus-visible {
-    outline: 2px solid var(--brand);
-    outline-offset: 2px;
-  }
-
-  ::-webkit-scrollbar {
-    width: 10px;
-    height: 10px;
-  }
-
-  ::-webkit-scrollbar-track {
-    background: transparent;
-  }
-
-  ::-webkit-scrollbar-thumb {
-    border-radius: 6px;
-    background: rgb(var(--border-strong));
-  }
-
-  ::-webkit-scrollbar-thumb:hover {
-    background: rgb(var(--ink-muted));
+    background-color: rgba(13, 148, 136, 0.2);
+    color: inherit;
   }
 }
 
-@layer components {
-  .th-eyebrow {
-    @apply font-mono text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-muted;
-  }
-
-  .th-panel {
-    @apply rounded-[6px] border border-border bg-surface;
-  }
-
-  .th-panel-muted {
-    @apply rounded-[6px] border border-border bg-surface-muted;
-  }
-
-  .th-input {
-    @apply h-10 w-full rounded-[6px] border border-border bg-surface px-3 text-sm text-ink placeholder:text-ink-faint transition-colors duration-200 focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20;
-  }
-
-  .th-btn {
-    @apply inline-flex h-9 items-center justify-center gap-2 rounded-[6px] border px-3 text-sm font-medium transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-brand/25 disabled:cursor-not-allowed disabled:opacity-60;
-  }
-
-  .th-btn-primary {
-    @apply border-brand-solid bg-brand-solid text-white hover:bg-brand-solid-hover;
-  }
-
-  .th-btn-secondary {
-    @apply border-border-strong bg-surface text-ink hover:bg-surface-muted;
-  }
-
-  .th-btn-ghost {
-    @apply border-transparent text-ink-secondary hover:bg-surface-muted hover:text-ink;
-  }
-
-  .th-forest-btn {
-    @apply border-forest-border bg-white/5 text-forest-ink hover:bg-white/10;
-  }
+/* Modern Clean Glassmorphism & Elevation */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(226, 232, 240, 0.8);
 }
 
-@layer utilities {
-  .text-pretty {
-    text-wrap: pretty;
-  }
-
-  .th-tabular {
-    font-variant-numeric: tabular-nums;
-  }
+.dark .glass-panel {
+  background: rgba(17, 24, 39, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(30, 41, 59, 0.8);
 }
 
-/* -------------------------------------------------------------------------
-   Public site — paper grid, forest grid and auth atmosphere
-   ------------------------------------------------------------------------- */
-.th-paper-grid {
+.glass-header {
+  background: rgba(11, 19, 41, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(30, 41, 59, 0.8);
+}
+
+/* Background Gradients & Clinical Ambient Meshes */
+.th-hero-glow {
+  background:
+    radial-gradient(
+      circle at 50% 0%,
+      rgba(14, 165, 233, 0.12) 0%,
+      rgba(13, 148, 136, 0.08) 35%,
+      transparent 70%
+    );
+}
+
+.th-grid-pattern {
   background-image:
-    linear-gradient(to right, rgba(17, 32, 28, 0.045) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(17, 32, 28, 0.045) 1px, transparent 1px);
-  background-size: 64px 64px;
+    linear-gradient(to right, rgba(148, 163, 184, 0.08) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(148, 163, 184, 0.08) 1px, transparent 1px);
+  background-size: 40px 40px;
 }
 
-.th-forest-grid {
+.th-grid-hero {
   background-image:
-    linear-gradient(to right, rgba(232, 239, 236, 0.055) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(232, 239, 236, 0.055) 1px, transparent 1px);
-  background-size: 56px 56px;
+    linear-gradient(to right, rgba(56, 189, 248, 0.07) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(56, 189, 248, 0.07) 1px, transparent 1px);
+  background-size: 48px 48px;
 }
 
 .th-auth-surface {
   background:
     radial-gradient(
-      ellipse 58% 52% at 16% 14%,
-      rgba(13, 148, 136, 0.24),
-      transparent 66%
+      ellipse 60% 50% at 20% 20%,
+      rgba(14, 165, 233, 0.18),
+      transparent 65%
     ),
     radial-gradient(
-      ellipse 48% 44% at 82% 84%,
-      rgba(13, 148, 136, 0.12),
+      ellipse 50% 45% at 80% 80%,
+      rgba(13, 148, 136, 0.15),
       transparent 70%
     ),
-    #081512;
+    #070b14;
 }
 
 .th-route-dash {
@@ -330,42 +268,39 @@
 /* -------------------------------------------------------------------------
    Leaflet — admin command map
    ------------------------------------------------------------------------- */
-/* Esri Dark Gray runs out of native tiles at z16. From z17 upward the map
-   switches to OSM for real street detail; the filter folds it into the same
-   command-centre palette so the layer change is visually seamless. */
 .th-map-osm-dark {
   filter: invert(1) hue-rotate(180deg) brightness(0.9) contrast(1.05)
     saturate(0.6);
 }
 
 .th-map-osm-light {
-  filter: sepia(0.16) saturate(0.72) contrast(0.96) brightness(1.02);
+  filter: contrast(0.98) brightness(1.02);
 }
 
 .th-map-dark.leaflet-container {
-  background: #08120f;
+  background: #070b14;
   color: rgb(var(--ink));
-  font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
+  font-family: 'Plus Jakarta Sans', 'Inter', ui-sans-serif, system-ui, sans-serif;
   outline: none;
 }
 
 .th-map-light.leaflet-container {
-  background: #e9e5da;
+  background: #f1f5f9;
   color: rgb(var(--ink));
-  font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
+  font-family: 'Plus Jakarta Sans', 'Inter', ui-sans-serif, system-ui, sans-serif;
   outline: none;
 }
 
 .th-map-dark .leaflet-control-container .leaflet-control,
 .th-map-light .leaflet-control-container .leaflet-control {
-  box-shadow: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .th-map-dark .leaflet-bar,
 .th-map-light .leaflet-bar {
   overflow: hidden;
   border: 1px solid rgb(var(--border));
-  border-radius: 6px;
+  border-radius: 8px;
   box-shadow: none;
 }
 
@@ -373,9 +308,9 @@
 .th-map-dark .leaflet-bar a:hover,
 .th-map-light .leaflet-bar a,
 .th-map-light .leaflet-bar a:hover {
-  width: 30px;
-  height: 30px;
-  line-height: 30px;
+  width: 32px;
+  height: 32px;
+  line-height: 32px;
   border-bottom: 1px solid rgb(var(--border));
   background: rgb(var(--surface));
   color: rgb(var(--ink));
@@ -401,13 +336,13 @@
 .th-map-dark .leaflet-control-attribution,
 .th-map-light .leaflet-control-attribution {
   margin: 0 6px 6px 0;
-  padding: 2px 6px;
+  padding: 3px 8px;
   border: 1px solid rgb(var(--border));
   border-radius: 6px;
-  background: rgb(var(--surface) / 0.86);
+  background: rgb(var(--surface) / 0.88);
   color: rgb(var(--ink-muted));
   font-size: 10px;
-  backdrop-filter: blur(4px);
+  backdrop-filter: blur(8px);
 }
 
 .th-map-dark .leaflet-control-attribution a,
@@ -417,13 +352,13 @@
 
 .th-map-dark .leaflet-tooltip,
 .th-map-light .leaflet-tooltip {
-  padding: 6px 8px;
+  padding: 8px 12px;
   border: 1px solid rgb(var(--border));
-  border-radius: 6px;
+  border-radius: 8px;
   background: rgb(var(--surface));
-  box-shadow: none;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
   color: rgb(var(--ink));
-  font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  font-family: 'Plus Jakarta Sans', 'Inter', ui-sans-serif, system-ui, sans-serif;
 }
 
 .th-map-dark .leaflet-tooltip-top::before,
@@ -448,8 +383,8 @@
 
 .th-map-tooltip-title {
   display: block;
-  font-size: 11px;
-  font-weight: 600;
+  font-size: 12px;
+  font-weight: 700;
   line-height: 1.4;
 }
 
@@ -465,7 +400,7 @@
   0%,
   100% {
     stroke-opacity: 1;
-    stroke-width: 2;
+    stroke-width: 2.5;
   }
 
   50% {
@@ -504,3 +439,79 @@
     animation: none;
   }
 }
+
+/* Universal Clinical Printing Styles */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 8mm;
+  }
+
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    box-sizing: border-box;
+  }
+
+  html, body {
+    background: #ffffff !important;
+    color: #0f172a !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    height: auto !important;
+    min-height: auto !important;
+    overflow: visible !important;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  /* When printing the Official Prescription Modal */
+  body:has(#official-prescription-modal-wrapper) #root > div > *:not(#official-prescription-modal-wrapper) {
+    display: none !important;
+  }
+
+  body:has(#official-prescription-modal-wrapper) #official-prescription-modal-wrapper {
+    position: static !important;
+    display: block !important;
+    width: 100% !important;
+    height: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+    overflow: visible !important;
+    inset: auto !important;
+  }
+
+  body:has(#official-prescription-modal-wrapper) #official-prescription-modal-wrapper > div {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  body:has(#official-prescription-modal-wrapper) #official-prescription-page {
+    position: static !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 8mm 10mm !important;
+    box-shadow: none !important;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 8px !important;
+    background: #ffffff !important;
+    page-break-after: avoid;
+    break-after: avoid;
+  }
+
+  #official-prescription-modal-wrapper {
+    position: static !important;
+    display: block !important;
+    width: 100% !important;
+    height: auto !important;
+    background: #ffffff !important;
+    overflow: visible !important;
+  }
+}
+

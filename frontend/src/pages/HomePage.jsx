@@ -10,11 +10,13 @@ import {
   Database,
   Hospital,
   LockKeyhole,
+  MapPin,
   Menu,
   MessageSquare,
-  Quote,
   Route,
+  Search,
   ShieldCheck,
+  Sparkles,
   Stethoscope,
   UserRound,
   Users,
@@ -24,7 +26,7 @@ import {
 } from 'lucide-react';
 import { DEMO_ACCOUNTS } from '../lib/demoAccounts';
 import useTriageStore from '../store/useTriageStore';
-import RoutingConsole from '../components/marketing/RoutingConsole';
+import DoctorHeroIllustration from '../components/marketing/DoctorHeroIllustration';
 import { BrandLockup } from '../components/Brand';
 
 const ROLE_PATHS = {
@@ -35,154 +37,158 @@ const ROLE_PATHS = {
 
 const NAV_LINKS = [
   { href: '#platform', label: 'Platform' },
-  { href: '#care-tiers', label: 'Care tiers' },
-  { href: '#how-it-works', label: 'How it works' },
+  { href: '#care-tiers', label: 'Care Tiers' },
+  { href: '#how-it-works', label: 'How It Works' },
   { href: '#portals', label: 'Portals' },
+  { href: '#demo-accounts', label: 'Resources' },
 ];
 
 const STATS = [
   {
     value: '05',
-    label: 'Connected facilities',
-    detail: 'Live capacity and travel time',
+    label: 'Connected Facilities',
+    detail: 'Live ICU, bed & ER wait metrics',
   },
   {
     value: '03',
-    label: 'Care tiers',
-    detail: 'Emergency, specialist, telehealth',
+    label: 'Care Tiers',
+    detail: 'Emergency, specialist & telehealth',
   },
   {
     value: '06',
-    label: 'Encounter states',
-    detail: 'Intake through close-out',
+    label: 'Encounter States',
+    detail: 'Intake to clinician close-out',
   },
   {
-    value: '01',
-    label: 'Shared record',
-    detail: 'Patient, physician, network ops',
+    value: '< 2s',
+    label: 'Routing Latency',
+    detail: 'Manchester protocol inference',
   },
 ];
 
 const CARE_TIERS = [
   {
     code: 'TIER 01',
-    title: 'Emergency',
+    title: 'Emergency Department',
     description:
-      'Chest pain, stroke signs, severe bleeding, and unstable vitals route to a definitive emergency department.',
-    route: 'Trauma-capable · cath lab · ICU',
+      'Chest pain, severe trauma, stroke signs, and unstable vitals route immediately to high-acuity facilities.',
+    route: 'Trauma-ready · Cath Lab · ICU Bed Reservation',
     icon: Zap,
-    color: '#DC2626',
-    soft: '#FEF2F2',
-    border: '#FECACA',
+    badgeClass: 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-200 dark:border-rose-900/50',
+    iconClass: 'bg-rose-50 text-rose-600 dark:bg-rose-950/60 dark:text-rose-400 ring-rose-500/20',
   },
   {
     code: 'TIER 02',
-    title: 'Urgent specialist',
+    title: 'Urgent Specialist Care',
     description:
-      'Asthma flares, fractures, and infections route to same-day specialist or primary care capacity.',
-    route: 'Same-day slot · specialty fit',
+      'Fractures, acute asthma flares, and moderate infections route to same-day specialty clinics with open capacity.',
+    route: 'Same-day queue slot · Direct specialty matching',
     icon: Stethoscope,
-    color: '#CA8A04',
-    soft: '#FEFCE8',
-    border: '#FDE68A',
+    badgeClass: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-900/50',
+    iconClass: 'bg-amber-50 text-amber-600 dark:bg-amber-950/60 dark:text-amber-400 ring-amber-500/20',
   },
   {
     code: 'TIER 03',
-    title: 'Telehealth',
+    title: 'Instant Telehealth Video',
     description:
-      'Reflux, anxiety, medication reviews, and low-acuity follow-ups route to a secure video visit.',
-    route: 'Zero travel · clinician video room',
+      'Medication reviews, rash follow-ups, anxiety, and mild respiratory symptoms route to secure video consultation.',
+    route: 'Instant connection · Zero transit · E-prescriptions',
     icon: Video,
-    color: '#0D9488',
-    soft: '#F0FDFA',
-    border: '#CCFBF1',
+    badgeClass: 'bg-teal-500/10 text-teal-600 dark:text-teal-400 border-teal-200 dark:border-teal-900/50',
+    iconClass: 'bg-teal-50 text-teal-600 dark:bg-teal-950/60 dark:text-teal-400 ring-teal-500/20',
   },
 ];
 
 const STEPS = [
   {
-    title: 'Patient intake',
+    title: 'Clinical Intake',
     description:
-      'A plain-language symptom story, grounded in the patient record and signed by their session.',
-    meta: 'JWT-derived identity',
+      'Structured conversational narrative capturing symptoms, duration, pain scale, and current medications.',
+    meta: 'JWT-Signed Patient Session',
     icon: MessageSquare,
   },
   {
-    title: 'Agent triage',
+    title: 'Manchester Protocol Triage',
     description:
-      'Protocol match, adherence and mental-health modifiers, and a reasoning trace the clinician can inspect.',
-    meta: 'Manchester Triage aligned',
+      'Algorithmic acuity assignment (Critical, High, Moderate, Low) with transparent, inspectable reasoning steps.',
+    meta: 'Clinical Protocol Standard',
     icon: Route,
   },
   {
-    title: 'Facility match',
+    title: 'Dynamic Hospital Matching',
     description:
-      'Live capacity, ER wait, specialty fit, and travel time are compared before a destination is chosen.',
-    meta: '5 facilities · 1 route',
+      'Live ER occupancy, ICU bed counts, traffic distance, and specialty capabilities scored in real time.',
+    meta: '5 Regional Facilities Evaluated',
     icon: Hospital,
   },
   {
-    title: 'Clinician acceptance',
+    title: 'Physician Handoff & Prescriptions',
     description:
-      'A licensed physician reviews the handoff, accepts the case, and can prescribe without leaving the queue.',
-    meta: 'Human in the loop',
+      'Licensed clinicians review the triage trace, accept the encounter, conduct video consults, and dispatch digital prescriptions.',
+    meta: 'Clinician In-the-Loop',
     icon: ShieldCheck,
   },
 ];
 
 const PORTALS = [
   {
-    tag: 'For patients',
-    title: 'Know where to go.',
+    tag: 'Patient Portal',
+    title: 'Intelligent Patient Care',
     description:
-      'See the route, understand the decision, and receive prescriptions and follow-up in one calm workspace.',
-    bullets: ['Live route status', 'Medicine adherence', 'Mental-health check-ins'],
+      'Report symptoms, see live routing decisions, join clinician video consults, and track medication adherence.',
+    bullets: ['Instant clinical intake', 'Live route & ETA countdown', 'Integrated video consults'],
     href: '/login?role=PATIENT',
     icon: UserRound,
+    accent: 'border-teal-500/40 hover:border-teal-500',
+    buttonColor: 'bg-teal-600 hover:bg-teal-700 text-white',
   },
   {
-    tag: 'For clinicians',
-    title: 'Decide with context.',
+    tag: 'Doctor Workstation',
+    title: 'Physician Command Center',
     description:
-      'Review the full handoff, inspect the agent trace, accept the case, and prescribe from a single queue.',
-    bullets: ['Risk modifiers', 'Agent reasoning', 'E-prescribing loop'],
+      'Queue management prioritized by acuity, full patient dossier review, SOAP notes, video appointments, and 1-click prescribing.',
+    bullets: ['Acuity-sorted triage queue', 'Complete Manchester trace', 'Direct digital prescriptions'],
     href: '/login?role=DOCTOR',
     icon: Stethoscope,
+    accent: 'border-cyan-500/40 hover:border-cyan-500',
+    buttonColor: 'bg-cyan-600 hover:bg-cyan-700 text-white',
   },
   {
-    tag: 'For network operations',
-    title: 'See the whole board.',
+    tag: 'Network Operations',
+    title: 'Hospital Grid Command',
     description:
-      'Watch capacity, simulate a facility outage, and confirm every affected route has been reassigned.',
-    bullets: ['Live command map', 'Shock simulation', 'Registered accounts'],
+      'Regional map of hospital loads, bed telemetry, live route feeds, and disaster simulation with instant re-routing.',
+    bullets: ['Live regional bed telemetry', 'Shock simulation engine', 'Automatic mass re-routing'],
     href: '/login?role=ADMIN',
     icon: Users,
+    accent: 'border-indigo-500/40 hover:border-indigo-500',
+    buttonColor: 'bg-indigo-600 hover:bg-indigo-700 text-white',
   },
 ];
 
 const PRINCIPLES = [
   {
-    title: 'Role-secured by default',
+    title: 'Cryptographically Secured',
     description:
-      'JWT-scoped socket rooms mean a patient only receives their own encounter, never another patient’s PHI.',
+      'JWT-authenticated sessions and isolated Socket.IO rooms ensure patient health records remain strictly confidential.',
     icon: LockKeyhole,
   },
   {
-    title: 'Every decision is traceable',
+    title: 'Full Audit Trail',
     description:
-      'Agent steps, rejected facilities, and clinician acceptance are stored on the shared encounter record.',
+      'Every triage step, rejected destination, and clinician action is logged to an immutable encounter history.',
     icon: Activity,
   },
   {
-    title: 'Reroutes are explicit',
+    title: 'Deterministic Shock Resiliency',
     description:
-      'A facility shock invokes rerouting immediately and broadcasts each new destination to the affected patient.',
+      'When a hospital enters limited or offline status, the network automatically computes and broadcasts alternate destinations.',
     icon: Route,
   },
   {
-    title: 'Demo-safe by design',
+    title: 'Zero PHI Leakage',
     description:
-      'Synthetic patients only. No real health information is used, stored, or transmitted in this environment.',
+      'Designed exclusively with synthetic clinical datasets so health workflows can be demonstrated safely.',
     icon: Database,
   },
 ];
@@ -193,9 +199,10 @@ function Brand({ light = false }) {
 
 function SectionEyebrow({ children }) {
   return (
-    <p className="font-mono text-[10px] font-medium uppercase tracking-[0.2em] text-[#0F766E]">
-      {children}
-    </p>
+    <div className="inline-flex items-center gap-2 rounded-full border border-[#BFDEC7] bg-[#DCEEE3] px-3.5 py-1 font-mono text-[11px] font-bold uppercase tracking-wider text-[#2D5A42] dark:border-[#385E4B] dark:bg-[#274335] dark:text-[#A8D3BA]">
+      <Sparkles className="h-3.5 w-3.5 text-[#3D6B56] dark:text-[#7CA982]" />
+      <span>{children}</span>
+    </div>
   );
 }
 
@@ -208,7 +215,7 @@ function Reveal({ children, className = '', delay = 0 }) {
       initial={reduceMotion ? false : { opacity: 0, y: 16 }}
       whileInView={reduceMotion ? undefined : { opacity: 1, y: 0 }}
       viewport={{ once: true, amount: 0.12 }}
-      transition={{ duration: 0.55, delay, ease: [0.22, 1, 0.36, 1] }}
+      transition={{ duration: 0.5, delay, ease: [0.22, 1, 0.36, 1] }}
     >
       {children}
     </motion.div>
@@ -222,44 +229,43 @@ export default function HomePage() {
   const workspacePath = auth ? ROLE_PATHS[auth.role] : null;
 
   return (
-    <div className="marketing min-h-screen bg-canvas text-ink">
-      <div className="bg-[#0B1B18] text-[#C7D6D1]">
-        <div className="mx-auto flex w-full max-w-[1400px] items-center justify-between gap-4 px-5 py-2 sm:px-8 lg:px-10">
-          <p className="flex min-w-0 items-center gap-2 text-[11px]">
-            <span
-              aria-hidden="true"
-              className="h-1.5 w-1.5 shrink-0 rounded-[1px] bg-[#16A34A]"
-            />
-            <span className="font-mono text-[9px] uppercase tracking-[0.16em] text-[#5EEAD4]">
-              Network status
+    <div className="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100 selection:bg-teal-500/20">
+      {/* Top Telemetry Banner */}
+      <div className="border-b border-slate-800 bg-slate-950 text-slate-300">
+        <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-4 px-4 py-2 sm:px-6 lg:px-8 text-xs">
+          <p className="flex min-w-0 items-center gap-2.5">
+            <span className="relative flex h-2 w-2">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
             </span>
-            <span className="hidden text-[#8FA69F] sm:inline">
-              All 5 facilities reporting · Chandigarh grid
+            <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-teal-400">
+              Network Operational
+            </span>
+            <span className="hidden text-slate-400 sm:inline">
+              · 5 Regional Healthcare Facilities Online · Live Socket Telemetry
             </span>
           </p>
           <a
-            href="#portals"
-            className="hidden items-center gap-1.5 text-[11px] font-medium text-[#C7D6D1] transition-colors hover:text-white sm:inline-flex"
+            href="#demo-accounts"
+            className="hidden items-center gap-1.5 font-medium text-slate-300 transition-colors hover:text-white sm:inline-flex"
           >
-            Explore the portals
-            <ArrowRight aria-hidden="true" className="h-3 w-3" />
+            Quick Demo Logins
+            <ArrowRight aria-hidden="true" className="h-3.5 w-3.5 text-teal-400" />
           </a>
         </div>
       </div>
 
-      <header className="sticky top-0 z-40 border-b border-[#DDD8CC] bg-[#F6F4EE]/[0.92] backdrop-blur-md">
-        <div className="mx-auto flex h-16 w-full max-w-[1400px] items-center justify-between gap-6 px-5 sm:px-8 lg:px-10">
+      {/* Main Glass Header */}
+      <header className="sticky top-0 z-40 border-b border-slate-200/80 bg-white/80 backdrop-blur-lg dark:border-slate-800 dark:bg-slate-900/80">
+        <div className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between gap-6 px-4 sm:px-6 lg:px-8">
           <Brand />
 
-          <nav
-            aria-label="Primary navigation"
-            className="hidden items-center gap-7 lg:flex"
-          >
+          <nav aria-label="Primary navigation" className="hidden items-center gap-8 lg:flex">
             {NAV_LINKS.map((link) => (
               <a
                 key={link.href}
                 href={link.href}
-                className="text-sm font-medium text-[#4D5A54] transition-colors hover:text-[#11201C]"
+                className="text-sm font-semibold text-slate-600 transition-colors hover:text-teal-600 dark:text-slate-300 dark:hover:text-teal-400"
               >
                 {link.label}
               </a>
@@ -267,230 +273,184 @@ export default function HomePage() {
           </nav>
 
           <div className="hidden items-center gap-3 sm:flex">
-            {workspacePath ? (
-              <Link
-                to={workspacePath}
-                className="inline-flex h-9 items-center gap-2 rounded-[6px] border border-[#0B4F4A] bg-[#0F766E] px-4 text-sm font-semibold text-white transition-colors hover:bg-[#0B4F4A]"
-              >
-                Open workspace
-                <ArrowUpRight aria-hidden="true" className="h-3.5 w-3.5" />
-              </Link>
-            ) : (
-              <>
-                <Link
-                  to="/login"
-                  className="inline-flex h-9 items-center rounded-[6px] border border-transparent px-3 text-sm font-medium text-[#4D5A54] transition-colors hover:border-[#DDD8CC] hover:bg-[#FFFDF8] hover:text-[#11201C]"
-                >
-                  Sign in
-                </Link>
-                <Link
-                  to="/login?mode=signup"
-                  className="inline-flex h-9 items-center gap-2 rounded-[6px] border border-[#0B4F4A] bg-[#0F766E] px-4 text-sm font-semibold text-white transition-colors hover:bg-[#0B4F4A]"
-                >
-                  Get started
-                  <ArrowUpRight aria-hidden="true" className="h-3.5 w-3.5" />
-                </Link>
-              </>
-            )}
+            <button
+              type="button"
+              aria-label="Search platform"
+              className="grid h-10 w-10 place-items-center rounded-xl border border-slate-200/80 bg-white text-slate-600 shadow-xs transition-colors hover:bg-slate-50 hover:text-slate-900 dark:border-slate-800 dark:bg-slate-800 dark:text-slate-300"
+            >
+              <Search aria-hidden="true" className="h-4 w-4" />
+            </button>
+
+            <Link
+              to={workspacePath || '/login'}
+              className="inline-flex h-10 items-center gap-2 rounded-xl bg-[#2D5A42] px-5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#234834] hover:shadow-md"
+            >
+              Enter Workspace
+              <ArrowRight aria-hidden="true" className="h-4 w-4" />
+            </Link>
           </div>
 
           <button
             type="button"
             onClick={() => setMenuOpen((open) => !open)}
             aria-expanded={menuOpen}
-            aria-controls="home-mobile-menu"
             aria-label={menuOpen ? 'Close menu' : 'Open menu'}
-            className="grid h-9 w-9 place-items-center rounded-[6px] border border-[#DDD8CC] bg-[#FFFDF8] text-[#11201C] lg:hidden"
+            className="grid h-10 w-10 place-items-center rounded-xl border border-slate-200 bg-white text-slate-800 dark:border-slate-800 dark:bg-slate-800 dark:text-slate-200 lg:hidden"
           >
-            {menuOpen ? (
-              <X aria-hidden="true" className="h-4 w-4" />
-            ) : (
-              <Menu aria-hidden="true" className="h-4 w-4" />
-            )}
+            {menuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
         </div>
 
         {menuOpen && (
-          <div
-            id="home-mobile-menu"
-            className="border-t border-[#DDD8CC] bg-[#F6F4EE] px-5 py-4 lg:hidden"
-          >
-            <nav aria-label="Mobile navigation" className="space-y-1">
+          <div className="border-t border-slate-200 bg-white px-4 py-4 dark:border-slate-800 dark:bg-slate-900 lg:hidden">
+            <nav className="space-y-1">
               {NAV_LINKS.map((link) => (
                 <a
                   key={link.href}
                   href={link.href}
                   onClick={() => setMenuOpen(false)}
-                  className="block rounded-[6px] px-3 py-2.5 text-sm font-medium text-[#4D5A54] hover:bg-[#FFFDF8] hover:text-[#11201C]"
+                  className="block rounded-lg px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
                 >
                   {link.label}
                 </a>
               ))}
             </nav>
-            <div className="mt-3 grid grid-cols-2 gap-2 border-t border-[#DDD8CC] pt-3">
-              {workspacePath ? (
-                <Link
-                  to={workspacePath}
-                  onClick={() => setMenuOpen(false)}
-                  className="col-span-2 inline-flex h-10 items-center justify-center gap-2 rounded-[6px] border border-[#0B4F4A] bg-[#0F766E] text-sm font-semibold text-white"
-                >
-                  Open workspace
-                  <ArrowUpRight aria-hidden="true" className="h-3.5 w-3.5" />
-                </Link>
-              ) : (
-                <>
-                  <Link
-                    to="/login"
-                    onClick={() => setMenuOpen(false)}
-                    className="inline-flex h-10 items-center justify-center rounded-[6px] border border-[#DDD8CC] bg-[#FFFDF8] text-sm font-medium text-[#11201C]"
-                  >
-                    Sign in
-                  </Link>
-                  <Link
-                    to="/login?mode=signup"
-                    onClick={() => setMenuOpen(false)}
-                    className="inline-flex h-10 items-center justify-center gap-1.5 rounded-[6px] border border-[#0B4F4A] bg-[#0F766E] text-sm font-semibold text-white"
-                  >
-                    Get started
-                    <ArrowUpRight aria-hidden="true" className="h-3.5 w-3.5" />
-                  </Link>
-                </>
-              )}
+            <div className="mt-4 grid grid-cols-2 gap-2 border-t border-slate-200 pt-3 dark:border-slate-800">
+              <Link
+                to="/login"
+                onClick={() => setMenuOpen(false)}
+                className="inline-flex h-10 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-sm font-semibold text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+              >
+                Sign In
+              </Link>
+              <Link
+                to="/login?mode=signup"
+                onClick={() => setMenuOpen(false)}
+                className="inline-flex h-10 items-center justify-center rounded-xl bg-teal-600 text-sm font-semibold text-white"
+              >
+                Get Started
+              </Link>
             </div>
           </div>
         )}
       </header>
 
       <main>
-        <section className="relative overflow-hidden border-b border-[#DDD8CC]">
-          <div aria-hidden="true" className="th-paper-grid absolute inset-0 opacity-70" />
-          <div
-            aria-hidden="true"
-            className="absolute -right-40 -top-40 h-[620px] w-[620px] rounded-full border border-[#DDD8CC]/80"
-          />
-          <div
-            aria-hidden="true"
-            className="absolute -right-24 -top-24 h-[420px] w-[420px] rounded-full border border-[#DDD8CC]/60"
-          />
+        {/* Hero Section matching the doctor-patient consultation mockup */}
+        <section className="relative overflow-hidden border-b border-slate-200/80 bg-[#F4F9F5] pt-12 pb-14 lg:pt-16 lg:pb-16 dark:border-slate-800 dark:bg-slate-950">
+          <div aria-hidden="true" className="th-hero-glow absolute inset-0 pointer-events-none opacity-40" />
 
-          <div className="relative mx-auto grid w-full max-w-[1400px] gap-14 px-5 pb-16 pt-14 sm:px-8 sm:pt-20 lg:grid-cols-[minmax(0,1.04fr)_minmax(0,0.96fr)] lg:items-center lg:gap-12 lg:px-10 lg:pb-24 lg:pt-24">
-            <motion.div
-              initial={reduceMotion ? false : { opacity: 0, y: 18 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-            >
-              <span className="inline-flex items-center gap-2 rounded-[3px] border border-[#CFC8B8] bg-[#FFFDF8] px-3 py-1.5 font-mono text-[9px] font-medium uppercase tracking-[0.16em] text-[#4D5A54]">
-                <span className="relative flex h-1.5 w-1.5">
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#16A34A] opacity-60" />
-                  <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-[#16A34A]" />
-                </span>
-                Clinical routing network · live
-              </span>
+          {/* Hero Consultation Background - Large in background with proper dimensions */}
+          <DoctorHeroIllustration isBackground />
 
-              <h1 className="mt-6 max-w-[720px] text-[clamp(2.9rem,6.2vw,5.6rem)] font-semibold leading-[0.94] tracking-[-0.055em] text-[#11201C]">
-                The right care.
-                <br />
-                The right door.
-                <br />
-                <span className="text-[#0D9488]">The right minute.</span>
-              </h1>
+          <div className="relative mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 z-10">
+            <div className="grid gap-8 lg:grid-cols-12 lg:items-center min-h-[380px] lg:min-h-[460px]">
+              <motion.div
+                className="lg:col-span-6 xl:col-span-5 max-w-xl z-10"
+                initial={reduceMotion ? false : { opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+              >
+                <SectionEyebrow>AI-Powered Clinical Decision Support</SectionEyebrow>
 
-              <p className="mt-6 max-w-xl text-base leading-7 text-[#4D5A54] sm:text-lg sm:leading-8">
-                Triage Horizon reads the symptom, weighs live capacity and travel
-                time, then routes every patient to the safest available care — with
-                a licensed clinician in the loop.
-              </p>
-
-              <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-                <Link
-                  to="/login?role=PATIENT&mode=signup"
-                  className="inline-flex h-12 items-center justify-center gap-2 rounded-[6px] border border-[#0B4F4A] bg-[#0F766E] px-6 text-sm font-semibold text-white transition-colors hover:bg-[#0B4F4A]"
-                >
-                  Start a triage
-                  <ArrowRight aria-hidden="true" className="h-4 w-4" />
-                </Link>
-                <a
-                  href="#platform"
-                  className="inline-flex h-12 items-center justify-center gap-2 rounded-[6px] border border-[#CFC8B8] bg-[#FFFDF8] px-6 text-sm font-semibold text-[#11201C] transition-colors hover:border-[#11201C] hover:bg-white"
-                >
-                  See how it works
-                  <ArrowDown aria-hidden="true" className="h-4 w-4" />
-                </a>
-              </div>
-
-              <div className="mt-8 flex flex-wrap items-center gap-x-5 gap-y-2 text-[11px] text-[#6B766F]">
-                <span className="inline-flex items-center gap-1.5">
-                  <Check aria-hidden="true" className="h-3.5 w-3.5 text-[#0D9488]" />
-                  Manchester Triage aligned
-                </span>
-                <span className="inline-flex items-center gap-1.5">
-                  <Check aria-hidden="true" className="h-3.5 w-3.5 text-[#0D9488]" />
-                  Role-secured access
-                </span>
-                <span className="inline-flex items-center gap-1.5">
-                  <Check aria-hidden="true" className="h-3.5 w-3.5 text-[#0D9488]" />
-                  Audit-ready trace
-                </span>
-              </div>
-            </motion.div>
-
-            <motion.div
-              className="relative mx-auto w-full max-w-[560px]"
-              initial={reduceMotion ? false : { opacity: 0, y: 22 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7, delay: 0.12, ease: [0.22, 1, 0.36, 1] }}
-            >
-              <div
-                aria-hidden="true"
-                className="absolute -inset-8 rounded-full border border-[#DDD8CC]/80"
-              />
-              <div
-                aria-hidden="true"
-                className="absolute -inset-16 rounded-full border border-[#DDD8CC]/40"
-              />
-              <div className="relative">
-                <RoutingConsole />
-              </div>
-
-              <div className="absolute -left-5 -top-10 hidden rounded-[6px] border border-[#DDD8CC] bg-[#FFFDF8] px-3 py-2 xl:block">
-                <p className="font-mono text-[8px] uppercase tracking-[0.16em] text-[#6B766F]">
-                  Network load
-                </p>
-                <p className="mt-1 text-sm font-semibold text-[#11201C]">
-                  54%{' '}
-                  <span className="text-[10px] font-normal text-[#6B766F]">
-                    across 5 facilities
+                <h1 className="mt-5 text-4xl font-extrabold tracking-tight leading-[1.08] text-[#172820] sm:text-5xl lg:text-[52px] xl:text-[58px] dark:text-white">
+                  The right care.
+                  <br />
+                  The right hospital.
+                  <br />
+                  <span className="text-[#3D6B56] dark:text-[#7CA982]">
+                    In seconds.
                   </span>
-                </p>
-              </div>
+                </h1>
 
-              <div className="absolute -bottom-10 -right-5 hidden rounded-[6px] border border-[#DDD8CC] bg-[#FFFDF8] px-3 py-2 xl:block">
-                <p className="font-mono text-[8px] uppercase tracking-[0.16em] text-[#6B766F]">
-                  Encounter rail
+                <p className="mt-5 text-base sm:text-lg leading-relaxed text-[#3B5446] dark:text-slate-300">
+                  Triage Horizon analyzes patient symptoms, checks real-time hospital capacity and travel times, and connects every patient to the right care, at the right place, at the right time.
                 </p>
-                <p className="mt-1 text-sm font-semibold text-[#11201C]">
-                  6 steps{' '}
-                  <span className="text-[10px] font-normal text-[#6B766F]">
-                    · 1 shared record
-                  </span>
-                </p>
+
+                <div className="mt-8 flex flex-wrap items-center gap-4">
+                  <Link
+                    to="/login?role=PATIENT&mode=signup"
+                    className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-[#2D5A42] px-7 text-sm font-bold text-white shadow-sm transition-all hover:bg-[#234834] hover:shadow-md"
+                  >
+                    Start Patient Triage
+                    <ArrowRight aria-hidden="true" className="h-4 w-4" />
+                  </Link>
+                  <a
+                    href="#how-it-works"
+                    className="inline-flex h-12 items-center justify-center gap-2.5 rounded-xl border border-slate-300 bg-white px-6 text-sm font-bold text-[#172820] shadow-xs transition-all hover:border-slate-400 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+                  >
+                    <span>Explore How It Works</span>
+                    <span className="grid h-5 w-5 place-items-center rounded-full border border-slate-400 text-[10px] text-slate-700 dark:text-slate-300">▶</span>
+                  </a>
+                </div>
+              </motion.div>
+
+              {/* On mobile / tablet viewports, show consultation scene cleanly stacked below */}
+              <div className="block lg:hidden w-full select-none -my-2">
+                <DoctorHeroIllustration />
               </div>
-            </motion.div>
+            </div>
+
+            {/* Bottom 4 Value Props Card from Mockup */}
+            <div className="mt-12 lg:mt-16 rounded-3xl border border-slate-200/90 bg-white/95 backdrop-blur-md p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900/95 relative z-10">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 items-center">
+                <div className="flex items-center gap-3.5">
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#E5F3EB] text-[#25523A] dark:bg-[#1E362A] dark:text-[#82AF96]">
+                    <Activity className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-[#172820] dark:text-white">Real-time Bed Availability</p>
+                    <p className="text-xs text-[#527060] dark:text-slate-400">Across the region</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3.5">
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#E5F3EB] text-[#25523A] dark:bg-[#1E362A] dark:text-[#82AF96]">
+                    <MapPin className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-[#172820] dark:text-white">Smart Hospital Routing</p>
+                    <p className="text-xs text-[#527060] dark:text-slate-400">Optimal facility based on severity and location</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3.5">
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#E5F3EB] text-[#25523A] dark:bg-[#1E362A] dark:text-[#82AF96]">
+                    <Users className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-[#172820] dark:text-white">Doctor-Patient Collaboration</p>
+                    <p className="text-xs text-[#527060] dark:text-slate-400">Seamless care coordination with full clinical oversight</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3.5">
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#E5F3EB] text-[#25523A] dark:bg-[#1E362A] dark:text-[#82AF96]">
+                    <ShieldCheck className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-[#172820] dark:text-white">Safer, Faster Care Decisions</p>
+                    <p className="text-xs text-[#527060] dark:text-slate-400">Evidence-backed recommendations for better outcomes</p>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </section>
 
-        <section aria-label="Network at a glance" className="border-b border-[#DDD8CC] bg-[#EFEBE2]">
-          <div className="mx-auto w-full max-w-[1400px] px-5 py-10 sm:px-8 lg:px-10 lg:py-12">
-            <div className="grid grid-cols-2 gap-px border border-[#DDD8CC] bg-[#DDD8CC] lg:grid-cols-4">
+        {/* Stats Row */}
+        <section aria-label="Network at a glance" className="border-b border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
+          <div className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+            <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
               {STATS.map((stat) => (
-                <div key={stat.label} className="bg-[#F6F4EE] p-5 sm:p-6">
-                  <p className="font-mono text-[9px] font-medium uppercase tracking-[0.18em] text-[#6B766F]">
+                <div key={stat.label} className="rounded-2xl border border-slate-200/80 bg-slate-50/50 p-5 dark:border-slate-800 dark:bg-slate-800/40">
+                  <p className="font-mono text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                     {stat.label}
                   </p>
-                  <p className="mt-2 text-3xl font-semibold tracking-[-0.04em] text-[#11201C] sm:text-4xl">
+                  <p className="mt-2 text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white sm:text-4xl">
                     {stat.value}
                   </p>
-                  <p className="mt-1 text-xs leading-5 text-[#6B766F]">
+                  <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">
                     {stat.detail}
                   </p>
                 </div>
@@ -499,476 +459,218 @@ export default function HomePage() {
           </div>
         </section>
 
-        <section
-          id="platform"
-          className="mx-auto w-full max-w-[1400px] px-5 py-20 sm:px-8 lg:px-10 lg:py-28"
-        >
-          <div className="grid gap-12 lg:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)] lg:gap-16">
-            <Reveal>
-              <SectionEyebrow>01 / The platform</SectionEyebrow>
-              <h2 className="mt-4 max-w-xl text-[clamp(2rem,4.2vw,3.6rem)] font-semibold leading-[1.02] tracking-[-0.045em] text-[#11201C]">
-                A routing decision that explains itself.
+        {/* Care Tiers */}
+        <section id="care-tiers" className="mx-auto w-full max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
+          <Reveal>
+            <div className="text-center">
+              <SectionEyebrow>Tri-Level Routing</SectionEyebrow>
+              <h2 className="mt-4 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl dark:text-white">
+                Precision Care Pathways
               </h2>
-              <p className="mt-5 max-w-xl text-base leading-7 text-[#4D5A54]">
-                Every case carries a trace: the protocol matched, the facilities
-                considered, the reason each was declined, and the clinician who
-                accepted it. No black boxes between a symptom and a destination.
+              <p className="mx-auto mt-3 max-w-2xl text-base text-slate-600 dark:text-slate-400">
+                Patients are automatically classified according to acute clinical requirements.
               </p>
+            </div>
+          </Reveal>
 
-              <ul className="mt-9 space-y-5">
-                {[
-                  {
-                    title: 'Protocol-grounded',
-                    detail:
-                      'Manchester Triage logic, adherence risk, and mental-health modifiers shape the route.',
-                  },
-                  {
-                    title: 'Capacity-aware',
-                    detail:
-                      'Live beds, ER wait, specialty fit, and travel time are compared in one pass.',
-                  },
-                  {
-                    title: 'Clinician-controlled',
-                    detail:
-                      'Every route waits for a licensed physician to review and accept the handoff.',
-                  },
-                ].map((feature, index) => (
-                  <li key={feature.title} className="flex gap-4">
-                    <span className="grid h-7 w-7 shrink-0 place-items-center rounded-[4px] border border-[#CFC8B8] bg-[#FFFDF8] font-mono text-[10px] font-semibold text-[#0F766E]">
-                      0{index + 1}
-                    </span>
+          <div className="mt-12 grid gap-6 md:grid-cols-3">
+            {CARE_TIERS.map((tier, idx) => {
+              const Icon = tier.icon;
+              return (
+                <Reveal key={tier.title} delay={idx * 0.1}>
+                  <div className="flex h-full flex-col justify-between rounded-2xl border border-slate-200/80 bg-white p-7 shadow-xs transition-all duration-300 hover:shadow-lg dark:border-slate-800 dark:bg-slate-900">
                     <div>
-                      <p className="text-sm font-semibold text-[#11201C]">
-                        {feature.title}
-                      </p>
-                      <p className="mt-1 text-sm leading-6 text-[#5A6660]">
-                        {feature.detail}
+                      <div className="flex items-center justify-between">
+                        <span className={`grid h-12 w-12 place-items-center rounded-xl ring-1 ${tier.iconClass}`}>
+                          <Icon className="h-6 w-6" />
+                        </span>
+                        <span className={`rounded-full border px-3 py-1 font-mono text-[10px] font-bold uppercase tracking-wider ${tier.badgeClass}`}>
+                          {tier.code}
+                        </span>
+                      </div>
+                      <h3 className="mt-6 text-xl font-bold text-slate-900 dark:text-white">
+                        {tier.title}
+                      </h3>
+                      <p className="mt-2 text-sm leading-relaxed text-slate-600 dark:text-slate-400">
+                        {tier.description}
                       </p>
                     </div>
-                  </li>
-                ))}
-              </ul>
-            </Reveal>
-
-            <Reveal delay={0.08}>
-              <div id="care-tiers" className="scroll-mt-24">
-                <div className="flex items-end justify-between gap-4">
-                  <div>
-                    <p className="font-mono text-[9px] font-medium uppercase tracking-[0.18em] text-[#6B766F]">
-                      Care tiers
-                    </p>
-                    <p className="mt-1 text-sm font-medium text-[#11201C]">
-                      The route follows the acuity.
-                    </p>
+                    <div className="mt-6 border-t border-slate-100 pt-4 dark:border-slate-800">
+                      <p className="font-mono text-xs font-semibold text-teal-600 dark:text-teal-400">
+                        {tier.route}
+                      </p>
+                    </div>
                   </div>
-                  <span className="font-mono text-[9px] uppercase tracking-[0.14em] text-[#9A9F95]">
-                    3 pathways
-                  </span>
-                </div>
-
-                <div className="mt-4 space-y-3">
-                  {CARE_TIERS.map((tier) => {
-                    const Icon = tier.icon;
-
-                    return (
-                      <div
-                        key={tier.title}
-                        className="rounded-[6px] border border-[#DDD8CC] bg-[#FFFDF8] p-5 transition-colors hover:border-[#B9B2A2]"
-                      >
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="flex items-center gap-2.5">
-                            <span
-                              className="grid h-8 w-8 place-items-center rounded-[4px] border"
-                              style={{
-                                color: tier.color,
-                                backgroundColor: tier.soft,
-                                borderColor: tier.border,
-                              }}
-                            >
-                              <Icon aria-hidden="true" className="h-4 w-4" />
-                            </span>
-                            <p className="text-sm font-semibold text-[#11201C]">
-                              {tier.title}
-                            </p>
-                          </div>
-                          <span className="font-mono text-[9px] uppercase tracking-[0.12em] text-[#9A9F95]">
-                            {tier.code}
-                          </span>
-                        </div>
-                        <p className="mt-3 text-sm leading-6 text-[#4D5A54]">
-                          {tier.description}
-                        </p>
-                        <p className="mt-3 border-t border-[#E8E4D9] pt-3 font-mono text-[9px] uppercase tracking-[0.1em] text-[#6B766F]">
-                          {tier.route}
-                        </p>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            </Reveal>
+                </Reveal>
+              );
+            })}
           </div>
         </section>
 
-        <section
-          id="how-it-works"
-          className="border-y border-[#DDD8CC] bg-[#EFEBE2]"
-        >
-          <div className="mx-auto w-full max-w-[1400px] px-5 py-20 sm:px-8 lg:px-10 lg:py-28">
-            <Reveal className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
-              <div>
-                <SectionEyebrow>02 / How it works</SectionEyebrow>
-                <h2 className="mt-4 max-w-2xl text-[clamp(2rem,4.2vw,3.6rem)] font-semibold leading-[1.02] tracking-[-0.045em] text-[#11201C]">
-                  From symptom to safe destination.
-                </h2>
-              </div>
-              <p className="max-w-sm text-sm leading-6 text-[#5A6660]">
-                The same encounter travels through four accountable steps. Nothing
-                is inferred silently, and nothing is routed without a clinician.
+        {/* How it Works */}
+        <section id="how-it-works" className="border-y border-slate-200/80 bg-slate-100/60 py-20 dark:border-slate-800 dark:bg-slate-900/50">
+          <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
+            <Reveal className="text-center">
+              <SectionEyebrow>Clinical Workflow</SectionEyebrow>
+              <h2 className="mt-4 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl dark:text-white">
+                How Triage Horizon Operates
+              </h2>
+              <p className="mx-auto mt-3 max-w-xl text-sm text-slate-600 dark:text-slate-400">
+                From initial symptom capture to physician sign-off, every decision step is transparent and verifiable.
               </p>
             </Reveal>
 
-            <div className="mt-12 grid gap-px border border-[#DDD8CC] bg-[#DDD8CC] md:grid-cols-2 xl:grid-cols-4">
-              {STEPS.map((step, index) => {
+            <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+              {STEPS.map((step, idx) => {
                 const Icon = step.icon;
-
                 return (
-                  <div key={step.title} className="bg-[#F6F4EE] p-6">
-                    <div className="flex items-center justify-between gap-3">
-                      <span className="font-mono text-[9px] font-medium uppercase tracking-[0.18em] text-[#0F766E]">
-                        Step 0{index + 1}
-                      </span>
-                      <Icon
-                        aria-hidden="true"
-                        className="h-4 w-4 text-[#6B766F]"
-                      />
+                  <Reveal key={step.title} delay={idx * 0.08}>
+                    <div className="h-full rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+                      <div className="flex items-center justify-between">
+                        <span className="font-mono text-xs font-bold text-teal-600 dark:text-teal-400">
+                          0{idx + 1}
+                        </span>
+                        <Icon className="h-5 w-5 text-slate-400" />
+                      </div>
+                      <h3 className="mt-4 text-base font-bold text-slate-900 dark:text-white">
+                        {step.title}
+                      </h3>
+                      <p className="mt-2 text-xs leading-relaxed text-slate-600 dark:text-slate-400">
+                        {step.description}
+                      </p>
+                      <div className="mt-4 border-t border-slate-100 pt-3 dark:border-slate-800">
+                        <span className="font-mono text-[10px] font-medium uppercase tracking-wider text-slate-400">
+                          {step.meta}
+                        </span>
+                      </div>
                     </div>
-                    <h3 className="mt-7 text-lg font-semibold tracking-[-0.02em] text-[#11201C]">
-                      {step.title}
-                    </h3>
-                    <p className="mt-2 text-sm leading-6 text-[#5A6660]">
-                      {step.description}
-                    </p>
-                    <p className="mt-5 border-t border-[#DDD8CC] pt-3 font-mono text-[9px] uppercase tracking-[0.1em] text-[#9A9F95]">
-                      {step.meta}
-                    </p>
-                  </div>
+                  </Reveal>
                 );
               })}
             </div>
           </div>
         </section>
 
-        <section id="portals" className="scroll-mt-16 bg-[#0B1B18] text-[#E8EFEC]">
-          <div className="th-forest-grid">
-            <div className="mx-auto w-full max-w-[1400px] px-5 py-20 sm:px-8 lg:px-10 lg:py-28">
-              <Reveal className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-                <div>
-                  <p className="font-mono text-[10px] font-medium uppercase tracking-[0.2em] text-[#5EEAD4]">
-                    03 / One shared record
-                  </p>
-                  <h2 className="mt-4 max-w-2xl text-[clamp(2rem,4.2vw,3.6rem)] font-semibold leading-[1.02] tracking-[-0.045em] text-[#F3F7F5]">
-                    One encounter. Every vantage point.
-                  </h2>
-                </div>
-                <p className="max-w-sm text-sm leading-6 text-[#A9BDB6]">
-                  The patient, the physician, and network operations all read from
-                  the same encounter backbone — updated live over Socket.IO.
-                </p>
-              </Reveal>
+        {/* Three Portals */}
+        <section id="portals" className="mx-auto w-full max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
+          <Reveal className="text-center">
+            <SectionEyebrow>Connected Workspaces</SectionEyebrow>
+            <h2 className="mt-4 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl dark:text-white">
+              Three Dedicated Portals. One Shared Backbone.
+            </h2>
+            <p className="mx-auto mt-3 max-w-2xl text-base text-slate-600 dark:text-slate-400">
+              Patients, physicians, and network operations view the same live encounter state synchronized via WebSockets.
+            </p>
+          </Reveal>
 
-              <div className="mt-12 grid gap-4 lg:grid-cols-3">
-                {PORTALS.map((portal, index) => {
-                  const Icon = portal.icon;
-
-                  return (
-                    <Reveal key={portal.title} delay={index * 0.06}>
-                      <div className="flex h-full flex-col rounded-[6px] border border-[#29423B] bg-[#102520] p-6 transition-colors hover:border-[#0D9488]">
-                        <div className="flex items-center justify-between gap-3">
-                          <span className="grid h-9 w-9 place-items-center rounded-[4px] border border-[#2A453D] bg-[#0C1F1A] text-[#5EEAD4]">
-                            <Icon aria-hidden="true" className="h-4 w-4" />
-                          </span>
-                          <span className="font-mono text-[9px] uppercase tracking-[0.14em] text-[#7E958E]">
-                            {portal.tag}
-                          </span>
-                        </div>
-                        <h3 className="mt-7 text-xl font-semibold tracking-[-0.02em] text-[#F3F7F5]">
-                          {portal.title}
-                        </h3>
-                        <p className="mt-2 text-sm leading-6 text-[#A9BDB6]">
-                          {portal.description}
-                        </p>
-                        <ul className="mt-5 space-y-2 border-t border-[#29423B] pt-4">
-                          {portal.bullets.map((bullet) => (
-                            <li
-                              key={bullet}
-                              className="flex items-center gap-2 text-xs text-[#C7D6D1]"
-                            >
-                              <span
-                                aria-hidden="true"
-                                className="h-1 w-1 rounded-[1px] bg-[#0D9488]"
-                              />
-                              {bullet}
-                            </li>
-                          ))}
-                        </ul>
-                        <Link
-                          to={portal.href}
-                          className="mt-auto inline-flex items-center gap-2 pt-7 text-sm font-semibold text-[#5EEAD4] transition-colors hover:text-white"
-                        >
-                          Open {portal.tag.toLowerCase()}
-                          <ArrowUpRight aria-hidden="true" className="h-4 w-4" />
-                        </Link>
+          <div className="mt-12 grid gap-8 lg:grid-cols-3">
+            {PORTALS.map((portal, idx) => {
+              const Icon = portal.icon;
+              return (
+                <Reveal key={portal.title} delay={idx * 0.1}>
+                  <div className={`flex h-full flex-col justify-between rounded-2xl border bg-white p-8 shadow-sm transition-all duration-300 hover:shadow-xl dark:bg-slate-900 ${portal.accent}`}>
+                    <div>
+                      <div className="flex items-center justify-between">
+                        <span className="grid h-12 w-12 place-items-center rounded-xl bg-slate-900 text-teal-400 dark:bg-slate-800">
+                          <Icon className="h-6 w-6" />
+                        </span>
+                        <span className="font-mono text-xs font-bold uppercase tracking-wider text-slate-500">
+                          {portal.tag}
+                        </span>
                       </div>
-                    </Reveal>
-                  );
-                })}
+                      <h3 className="mt-6 text-xl font-bold text-slate-900 dark:text-white">
+                        {portal.title}
+                      </h3>
+                      <p className="mt-2 text-sm leading-relaxed text-slate-600 dark:text-slate-400">
+                        {portal.description}
+                      </p>
+                      <ul className="mt-6 space-y-2.5 border-t border-slate-100 pt-5 dark:border-slate-800">
+                        {portal.bullets.map((bullet) => (
+                          <li key={bullet} className="flex items-center gap-2.5 text-xs font-medium text-slate-700 dark:text-slate-300">
+                            <span className="h-1.5 w-1.5 rounded-full bg-teal-500" />
+                            {bullet}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                    <Link
+                      to={portal.href}
+                      className={`mt-8 inline-flex h-11 items-center justify-center gap-2 rounded-xl text-sm font-bold shadow-xs transition-all ${portal.buttonColor}`}
+                    >
+                      Open {portal.tag}
+                      <ArrowRight className="h-4 w-4" />
+                    </Link>
+                  </div>
+                </Reveal>
+              );
+            })}
+          </div>
+        </section>
+
+        {/* Demo Accounts Quick-Launch */}
+        <section id="demo-accounts" className="border-t border-slate-200/80 bg-slate-100/60 py-16 dark:border-slate-800 dark:bg-slate-900/50">
+          <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div>
+                <SectionEyebrow>Instant Access</SectionEyebrow>
+                <h2 className="mt-2 text-2xl font-bold text-slate-900 dark:text-white">
+                  Built-in Demo Credentials
+                </h2>
+                <p className="text-sm text-slate-600 dark:text-slate-400">
+                  Click any role to prefill credentials and explore the platform immediately.
+                </p>
               </div>
             </div>
-          </div>
-        </section>
 
-        <section className="mx-auto w-full max-w-[1400px] px-5 py-20 sm:px-8 lg:px-10 lg:py-28">
-          <div className="grid gap-12 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] lg:gap-16">
-            <Reveal>
-              <SectionEyebrow>04 / Clinical governance</SectionEyebrow>
-              <h2 className="mt-4 max-w-xl text-[clamp(2rem,4.2vw,3.6rem)] font-semibold leading-[1.02] tracking-[-0.045em] text-[#11201C]">
-                Built for the moments that cannot be improvised.
-              </h2>
-              <p className="mt-5 max-w-xl text-base leading-7 text-[#4D5A54]">
-                A routing platform is only as good as the guarantees around it.
-                These are the boundaries that make Triage Horizon safe to operate.
-              </p>
-
-              <div className="mt-9 grid gap-px border border-[#DDD8CC] bg-[#DDD8CC] sm:grid-cols-2">
-                {PRINCIPLES.map((principle) => {
-                  const Icon = principle.icon;
-
-                  return (
-                    <div key={principle.title} className="bg-[#FFFDF8] p-5">
-                      <Icon
-                        aria-hidden="true"
-                        className="h-4 w-4 text-[#0F766E]"
-                      />
-                      <p className="mt-4 text-sm font-semibold text-[#11201C]">
-                        {principle.title}
-                      </p>
-                      <p className="mt-1.5 text-xs leading-5 text-[#5A6660]">
-                        {principle.description}
-                      </p>
-                    </div>
-                  );
-                })}
-              </div>
-            </Reveal>
-
-            <Reveal delay={0.08} className="flex">
-              <div className="flex w-full flex-col justify-between rounded-[6px] border border-[#DDD8CC] bg-[#EFEBE2] p-7 sm:p-9">
-                <div>
-                  <Quote
-                    aria-hidden="true"
-                    className="h-7 w-7 text-[#0D9488]"
-                    strokeWidth={1.6}
-                  />
-                  <blockquote className="mt-5 max-w-lg text-2xl font-medium leading-9 tracking-[-0.03em] text-[#11201C] sm:text-[28px] sm:leading-10">
-                    “The best triage decision is the one the patient never has to
-                    chase.”
-                  </blockquote>
-                </div>
-
-                <div>
-                  <div className="mt-8 flex items-center gap-3 border-t border-[#D5CFC1] pt-5">
-                    <span className="grid h-10 w-10 place-items-center rounded-[6px] border border-[#CFC8B8] bg-[#FFFDF8] text-xs font-semibold text-[#0F766E]">
-                      MS
-                    </span>
-                    <div>
-                      <p className="text-sm font-semibold text-[#11201C]">
-                        Dr. Mira Sen
-                      </p>
-                      <p className="text-xs text-[#6B766F]">
-                        Triage physician · Horizon Network
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="mt-6 grid grid-cols-3 gap-px border border-[#D5CFC1] bg-[#D5CFC1]">
-                    {[
-                      { value: '6', label: 'step rail' },
-                      { value: '3', label: 'portals' },
-                      { value: '1', label: 'record' },
-                    ].map((item) => (
-                      <div key={item.label} className="bg-[#F6F4EE] px-3 py-3">
-                        <p className="font-mono text-lg font-semibold text-[#11201C]">
-                          {item.value}
-                        </p>
-                        <p className="mt-0.5 font-mono text-[8px] uppercase tracking-[0.12em] text-[#6B766F]">
-                          {item.label}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </Reveal>
-          </div>
-        </section>
-
-        <section className="border-t border-[#DDD8CC] bg-[#EFEBE2]">
-          <div className="mx-auto w-full max-w-[1400px] px-5 py-16 sm:px-8 lg:px-10 lg:py-20">
-            <Reveal className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
-              <div>
-                <SectionEyebrow>05 / Enter the network</SectionEyebrow>
-                <h2 className="mt-4 text-[clamp(2rem,4.2vw,3.6rem)] font-semibold leading-[1.02] tracking-[-0.045em] text-[#11201C]">
-                  See the network think.
-                </h2>
-                <p className="mt-4 max-w-2xl text-base leading-7 text-[#4D5A54]">
-                  Use a demo identity, or create a patient or physician account. New
-                  accounts are saved to the network database and can sign in again
-                  with the credentials you choose.
-                </p>
-              </div>
-
-              <div className="flex flex-col gap-3 sm:flex-row">
-                <Link
-                  to="/login"
-                  className="inline-flex h-11 items-center justify-center gap-2 rounded-[6px] border border-[#0B4F4A] bg-[#0F766E] px-5 text-sm font-semibold text-white transition-colors hover:bg-[#0B4F4A]"
-                >
-                  Open sign in
-                  <ArrowRight aria-hidden="true" className="h-4 w-4" />
-                </Link>
-                <Link
-                  to="/login?mode=signup"
-                  className="inline-flex h-11 items-center justify-center gap-2 rounded-[6px] border border-[#CFC8B8] bg-[#FFFDF8] px-5 text-sm font-semibold text-[#11201C] transition-colors hover:border-[#11201C] hover:bg-white"
-                >
-                  Create account
-                  <ArrowUpRight aria-hidden="true" className="h-4 w-4" />
-                </Link>
-              </div>
-            </Reveal>
-
-            <div className="mt-9 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {DEMO_ACCOUNTS.map((account) => (
                 <Link
                   key={account.email}
-                  to={`/login?role=${account.role}`}
-                  className="group rounded-[6px] border border-[#DDD8CC] bg-[#FFFDF8] p-4 transition-colors hover:border-[#0D9488]"
+                  to={`/login?role=${account.role}&email=${encodeURIComponent(account.email)}`}
+                  className="group rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs transition-all duration-200 hover:border-teal-500/50 hover:shadow-md dark:border-slate-800 dark:bg-slate-900"
                 >
-                  <div className="flex items-center justify-between gap-3">
-                    <span className="text-sm font-semibold text-[#11201C]">
-                      {account.label}
+                  <div className="flex items-center justify-between">
+                    <span className="rounded-full bg-slate-100 px-3 py-1 font-mono text-[10px] font-bold uppercase tracking-wider text-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                      {account.role}
                     </span>
-                    <ArrowUpRight
-                      aria-hidden="true"
-                      className="h-3.5 w-3.5 text-[#9A9F95] transition-colors group-hover:text-[#0D9488]"
-                    />
+                    <ArrowUpRight className="h-4 w-4 text-slate-400 transition-colors group-hover:text-teal-600" />
                   </div>
-                  <p className="mt-1 text-xs text-[#6B766F]">{account.detail}</p>
-                  <p className="mt-3 truncate border-t border-[#E8E4D9] pt-2 font-mono text-[9px] text-[#9A9F95]">
+                  <p className="mt-3 text-sm font-bold text-slate-900 dark:text-white">
+                    {account.label}
+                  </p>
+                  <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                    {account.detail}
+                  </p>
+                  <p className="mt-3 truncate border-t border-slate-100 pt-2 font-mono text-[11px] text-teal-600 dark:border-slate-800 dark:text-teal-400">
                     {account.email}
                   </p>
                 </Link>
               ))}
             </div>
-
-            <p className="mt-5 flex items-center gap-2 text-[11px] text-[#6B766F]">
-              <ShieldCheck aria-hidden="true" className="h-3.5 w-3.5" />
-              Admin accounts are provisioned by network operations. This is a
-              synthetic demo environment.
-            </p>
           </div>
         </section>
       </main>
 
-      <footer className="bg-[#0B1B18] text-[#A9BDB6]">
-        <div className="mx-auto w-full max-w-[1400px] px-5 py-12 sm:px-8 lg:px-10">
-          <div className="grid gap-10 border-b border-[#29423B] pb-10 lg:grid-cols-[minmax(0,1.4fr)_repeat(3,minmax(0,0.6fr))]">
+      {/* Footer */}
+      <footer className="border-t border-slate-800 bg-slate-950 text-slate-400 py-12">
+        <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 pb-8 border-b border-slate-800">
             <div>
               <Brand light />
-              <p className="mt-4 max-w-xs text-sm leading-6 text-[#8FA69F]">
-                Clinical triage and routing for patients, physicians, and network
-                operations.
-              </p>
-              <p className="mt-5 inline-flex items-center gap-2 rounded-[4px] border border-[#29423B] px-2.5 py-1 font-mono text-[9px] uppercase tracking-[0.12em] text-[#5EEAD4]">
-                <span className="h-1.5 w-1.5 rounded-[1px] bg-[#16A34A]" />
-                All systems operational
+              <p className="mt-2 text-sm text-slate-400 max-w-md">
+                Algorithmic clinical triage and capacity-aware patient routing.
               </p>
             </div>
-
-            <div>
-              <p className="font-mono text-[9px] uppercase tracking-[0.16em] text-[#7E958E]">
-                Platform
-              </p>
-              <ul className="mt-3 space-y-2 text-sm">
-                <li>
-                  <a href="#platform" className="hover:text-white">
-                    Routing engine
-                  </a>
-                </li>
-                <li>
-                  <a href="#care-tiers" className="hover:text-white">
-                    Care tiers
-                  </a>
-                </li>
-                <li>
-                  <a href="#how-it-works" className="hover:text-white">
-                    How it works
-                  </a>
-                </li>
-              </ul>
-            </div>
-
-            <div>
-              <p className="font-mono text-[9px] uppercase tracking-[0.16em] text-[#7E958E]">
-                Access
-              </p>
-              <ul className="mt-3 space-y-2 text-sm">
-                <li>
-                  <Link to="/login?role=PATIENT" className="hover:text-white">
-                    Patient portal
-                  </Link>
-                </li>
-                <li>
-                  <Link to="/login?role=DOCTOR" className="hover:text-white">
-                    Physician portal
-                  </Link>
-                </li>
-                <li>
-                  <Link to="/login?role=ADMIN" className="hover:text-white">
-                    Network operations
-                  </Link>
-                </li>
-              </ul>
-            </div>
-
-            <div>
-              <p className="font-mono text-[9px] uppercase tracking-[0.16em] text-[#7E958E]">
-                Trust
-              </p>
-              <ul className="mt-3 space-y-2 text-sm">
-                <li>
-                  <a href="#portals" className="hover:text-white">
-                    Shared encounter
-                  </a>
-                </li>
-                <li>
-                  <a href="#portals" className="hover:text-white">
-                    Role-based access
-                  </a>
-                </li>
-                <li>
-                  <a href="#portals" className="hover:text-white">
-                    Clinical governance
-                  </a>
-                </li>
-              </ul>
+            <div className="flex flex-wrap gap-6 text-sm font-semibold">
+              <a href="#platform" className="hover:text-white">Platform</a>
+              <a href="#care-tiers" className="hover:text-white">Care Tiers</a>
+              <a href="#how-it-works" className="hover:text-white">How It Works</a>
+              <a href="#portals" className="hover:text-white">Portals</a>
             </div>
           </div>
-
-          <div className="flex flex-col gap-3 pt-6 text-[11px] text-[#6F8880] sm:flex-row sm:items-center sm:justify-between">
-            <p>© 2026 Triage Horizon. Synthetic demo environment.</p>
-            <p className="font-mono text-[9px] uppercase tracking-[0.12em]">
-              No real patient health information
-            </p>
+          <div className="mt-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 text-xs text-slate-500">
+            <p>© 2026 Triage Horizon. Synthetic clinical research demonstration.</p>
+            <p className="font-mono text-[11px]">No real patient protected health information (PHI) is processed.</p>
           </div>
         </div>
       </footer>

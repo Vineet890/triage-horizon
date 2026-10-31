@@ -9,6 +9,7 @@ import {
   acceptEncounter,
   prescribeEncounter,
 } from '../services/encounterService.js';
+import { assignEncounterToDoctor } from '../services/doctorAssignmentService.js';
 import { findUserById } from '../services/userStore.js';
 import {
   emitEncounterUpdated,
@@ -22,8 +23,14 @@ router.use(authenticate);
 
 function canReadEncounter(user, encounter) {
   if (!user || !encounter) return false;
-  if (user.role === 'DOCTOR' || user.role === 'ADMIN') return true;
-  return encounter.patient_id === user.userId;
+  if (user.role === 'ADMIN') return true;
+  if (
+    user.role === 'DOCTOR' &&
+    encounter.assigned_doctor_id === user.userId
+  ) {
+    return true;
+  }
+  return user.role === 'PATIENT' && encounter.patient_id === user.userId;
 }
 
 async function resolveDoctorName(userId) {
@@ -38,6 +45,8 @@ router.get('/', async (req, res) => {
 
     if (req.user.role === 'PATIENT') {
       filter.patient_id = req.user.userId;
+    } else if (req.user.role === 'DOCTOR') {
+      filter.assigned_doctor_id = req.user.userId;
     } else if (typeof req.query.patient_id === 'string') {
       filter.patient_id = req.query.patient_id;
     }
@@ -82,6 +91,44 @@ router.get('/:id', async (req, res) => {
   }
 });
 
+// POST /api/encounters/:id/assign-doctor - ADMIN only.
+router.post(
+  '/:id/assign-doctor',
+  requireRole(['ADMIN']),
+  async (req, res) => {
+    const doctorId = typeof req.body?.doctor_id === 'string'
+      ? req.body.doctor_id.trim()
+      : '';
+
+    if (!doctorId) {
+      return res.status(400).json({ error: 'doctor_id is required.' });
+    }
+
+    try {
+      const result = await assignEncounterToDoctor({
+        encounterId: req.params.id,
+        doctorId,
+        actor: await resolveDoctorName(req.user.userId),
+      });
+
+      if (result.error) {
+        return res.status(result.statusCode ?? 400).json({ error: result.error });
+      }
+
+      const io = getIO();
+      if (io) emitEncounterUpdated(io, result.encounter);
+
+      return res.status(200).json({
+        success: true,
+        encounter: result.encounter,
+      });
+    } catch (error) {
+      console.error('[encounters] doctor assignment failed:', error);
+      return res.status(500).json({ error: 'Unable to assign the doctor.' });
+    }
+  }
+);
+
 // POST /api/encounters/:id/accept - DOCTOR only.
 router.post(
   '/:id/accept',
@@ -100,7 +147,16 @@ router.post(
       }
 
       const io = getIO();
-      if (io) emitEncounterUpdated(io, result.encounter);
+      if (io) {
+        emitEncounterUpdated(io, result.encounter);
+        emitToPatient(io, result.encounter.patient_id, 'DOCTOR_ACCEPTED', {
+          patient_id: result.encounter.patient_id,
+          encounter_id: result.encounter.id,
+          doctor_id: result.encounter.assigned_doctor_id,
+          doctor_name: result.encounter.assigned_doctor_name,
+          accepted_at: result.encounter.updated_at ?? new Date().toISOString(),
+        });
+      }
 
       return res.status(200).json({
         success: true,

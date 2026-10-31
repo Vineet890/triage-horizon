@@ -8,18 +8,23 @@
     "start": "node src/server.js",
     "dev": "node --watch src/server.js",
     "seed": "node src/scripts/seed.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "seed:doctors": "node src/scripts/seed-doctors.js",
+    "test": "node --test"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@langchain/core": "^1.3.2",
+    "@langchain/groq": "^1.3.1",
+    "@langchain/langgraph": "^1.5.3",
     "bcryptjs": "^3.0.3",
     "cors": "^2.8.6",
     "dotenv": "^18.0.9",
     "express": "^5.3.0",
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^9.11.4",
-    "socket.io": "^4.8.4"
+    "socket.io": "^4.8.4",
+    "web-push": "^3.6.7"
   }
 }

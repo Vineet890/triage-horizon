@@ -3,95 +3,8 @@ import {
   findActiveByFacility,
   updateEncounter,
 } from './encounterStore.js';
-
-/**
- * Picks the best remaining facility for a care tier.
- * Emergency routes prefer ICU/cath-lab capability before travel time.
- * Mental-health routes prefer another mental-health clinic when one exists.
- */
-function selectAlternative(facilityId, encounter) {
-  const careTier = encounter.care_tier;
-  const previous = encounter.selected_facility ?? encounter.facility_snapshot ?? {};
-
-  let candidates = facilityStateManager
-    .getAllStates()
-    .filter((facility) => facility.id !== facilityId)
-    .filter((facility) => facility.status !== 'OFFLINE')
-    .filter((facility) => facility.capacity_pct < 95);
-
-  if (careTier === 'telehealth') {
-    const mentalCandidates = candidates.filter(
-      (facility) => facility.type === 'mental_health_clinic'
-    );
-
-    if (mentalCandidates.length > 0) {
-      return mentalCandidates.sort((a, b) => a.eta_min - b.eta_min)[0];
-    }
-
-    return {
-      id: 'telehealth',
-      name: 'Triage Horizon Telehealth',
-      type: 'telehealth',
-      distance_km: 0,
-      eta_min: 0,
-      capacity_pct: null,
-      er_beds_available: 0,
-      er_wait_min: 0,
-      specialties: ['telehealth'],
-      status: 'AVAILABLE',
-    };
-  }
-
-  candidates = candidates.filter(
-    (facility) =>
-      facility.type !== 'mental_health_clinic' ||
-      previous.type === 'mental_health_clinic'
-  );
-
-  if (careTier === 'emergency') {
-    const capable = candidates.filter(
-      (facility) => facility.has_icu || facility.has_cath_lab
-    );
-
-    if (capable.length > 0) {
-      candidates = capable;
-    }
-  } else {
-    const routineCapable = candidates.filter(
-      (facility) => facility.capacity_pct < 90 && facility.er_wait_min < 60
-    );
-
-    if (routineCapable.length > 0) {
-      candidates = routineCapable;
-    }
-  }
-
-  if (candidates.length === 0) {
-    return null;
-  }
-
-  return candidates.sort((a, b) => {
-    if (careTier === 'emergency') {
-      const capability = (facility) =>
-        Number(facility.has_icu) +
-        Number(facility.has_cath_lab) +
-        Number(facility.has_icu && facility.has_cath_lab);
-
-      const delta = capability(b) - capability(a);
-      if (delta !== 0) return delta;
-
-      if (previous.type === 'teaching_hospital') {
-        const teaching =
-          Number(b.type === 'teaching_hospital') -
-          Number(a.type === 'teaching_hospital');
-        if (teaching !== 0) return teaching;
-      }
-    }
-
-    if (a.eta_min !== b.eta_min) return a.eta_min - b.eta_min;
-    return a.capacity_pct - b.capacity_pct;
-  })[0];
-}
+import { rankFacilities } from './facilityRouting.js';
+import { getProtocolByCode, matchProtocol } from './triageEngine.js';
 
 function emitRouteUpdate(io, update) {
   if (!io) return;
@@ -133,8 +46,38 @@ export async function rerouteAffectedPatients(facilityId, io) {
       continue;
     }
 
-    const previous = encounter.selected_facility ?? encounter.facility_snapshot ?? {};
-    const alternative = selectAlternative(facilityId, encounter);
+    const previous =
+      encounter.selected_facility ?? encounter.facility_snapshot ?? {};
+    const protocolCode = String(encounter.protocol_matched ?? '')
+      .split(':', 1)[0]
+      .trim();
+    const protocol =
+      getProtocolByCode(protocolCode) ?? matchProtocol(encounter.symptom);
+    const mentalHealthContext =
+      protocol.required_specialty === 'mental_health' ||
+      previous.type === 'mental_health_clinic';
+    const alternative =
+      rankFacilities({
+        facilities: facilityStateManager.getAllStates(),
+        protocol,
+        careTier: encounter.care_tier,
+        mentalHealthContext,
+        excludeFacilityIds: [facilityId],
+      })[0] ??
+      (encounter.care_tier === 'telehealth' && !mentalHealthContext
+        ? {
+            id: 'telehealth',
+            name: 'Triage Horizon Telehealth',
+            type: 'telehealth',
+            distance_km: 0,
+            eta_min: 0,
+            capacity_pct: null,
+            er_beds_available: 0,
+            er_wait_min: 0,
+            specialties: ['telehealth'],
+            status: 'AVAILABLE',
+          }
+        : null);
     const reroutedAt = new Date().toISOString();
 
     if (!alternative) {

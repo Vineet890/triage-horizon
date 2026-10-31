@@ -5,10 +5,11 @@ import { defineConfig } from 'vite'
 export default defineConfig({
   plugins: [react()],
   server: {
-    // Listen on both IPv6 and IPv4 so localhost and 127.0.0.1 both work.
-    host: '::',
+    // Bind to every interface so editor port-forwarding can reach Vite.
+    host: '0.0.0.0',
     port: 5173,
-    allowedHosts: ['.app.github.dev'],
+    strictPort: true,
+    allowedHosts: ['.app.github.dev', '.devtunnels.ms'],
     proxy: {
       '/api': {
         target: 'http://127.0.0.1:5000',

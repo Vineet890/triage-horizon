@@ -8,6 +8,7 @@ import useTriageStore from './store/useTriageStore';
 import { BrandMark } from './components/Brand';
 import RouteToast from './components/RouteToast';
 import PrescriptionToast from './components/PrescriptionToast';
+import PrescriptionPdfModal from './components/PrescriptionPdfModal';
 import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
 
@@ -83,6 +84,9 @@ export default function App() {
   const setAgentTrace = useTriageStore((state) => state.setAgentTrace);
   const addPrescription = useTriageStore((state) => state.addPrescription);
   const setSocketConnected = useTriageStore((state) => state.setSocketConnected);
+  const prescriptionPdfModal = useTriageStore((state) => state.prescriptionPdfModal);
+  const closePrescriptionPdfModal = useTriageStore((state) => state.closePrescriptionPdfModal);
+  const currentPatient = useTriageStore((state) => state.currentPatient);
 
   useEffect(() => {
     const handleSessionExpired = () => {
@@ -147,7 +151,9 @@ export default function App() {
 
     const handleFacilityState = (payload) => updateFacility(payload);
     const handleRouteUpdate = (payload) => applyRouteUpdate(payload);
-    const handleTriageComplete = (payload) => addTriageEvent(payload);
+    const handleTriageComplete = (payload) => {
+      if (auth.role === 'ADMIN') addTriageEvent(payload);
+    };
     const handleEncounterUpdated = (payload) => upsertEncounter(payload);
 
     const handleAgentThinking = (payload) => {
@@ -261,6 +267,12 @@ export default function App() {
       </Suspense>
       <RouteToast />
       <PrescriptionToast />
+      <PrescriptionPdfModal
+        isOpen={Boolean(prescriptionPdfModal)}
+        onClose={closePrescriptionPdfModal}
+        prescription={prescriptionPdfModal}
+        patient={currentPatient}
+      />
     </div>
   );
 }

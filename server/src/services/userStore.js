@@ -254,6 +254,24 @@ export async function listUsers() {
     }
   });
 
+  DEMO_USERS.forEach((user) => {
+    if (!byEmail.has(user.email)) {
+      byEmail.set(
+        user.email,
+        publicUser({
+          id: user.userId,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+          licenseNumber: user.licenseNumber,
+          specialty: user.specialty,
+          yearsExperience: user.yearsExperience,
+          createdAt: null,
+        })
+      );
+    }
+  });
+
   return sortNewestFirst(Array.from(byEmail.values()));
 }
 

@@ -18,6 +18,7 @@ import {
   AlertTriangle,
   ArrowRight,
   BedDouble,
+  Bell,
   ChartColumn,
   CheckCircle2,
   ChevronRight,
@@ -60,6 +61,8 @@ import EncounterRail from '../components/EncounterRail';
 import FacilityStatusBadge from '../components/FacilityStatusBadge';
 import PortalHeader from '../components/PortalHeader';
 import AcuityBadge from '../components/AcuityBadge';
+import NotificationPanel from '../components/NotificationPanel';
+import TriageNotificationPopup from '../components/TriageNotificationPopup';
 
 const STATUS_ORDER = { AVAILABLE: 0, LIMITED: 1, BUSY: 2, OFFLINE: 3 };
 
@@ -198,7 +201,7 @@ function EncounterStatusBadge({ status }) {
   return (
     <span
       className={cn(
-        'inline-flex rounded-[4px] border px-2 py-1 text-[10px] font-semibold uppercase tracking-wide',
+        'inline-flex rounded-lg border px-2 py-1 text-[10px] font-semibold uppercase tracking-wide',
         ENCOUNTER_STATUS_TONES[status] ?? ENCOUNTER_STATUS_TONES.CLOSED
       )}
     >
@@ -213,7 +216,7 @@ function StatStrip({ children, className = '' }) {
   return (
     <div
       className={cn(
-        'grid grid-cols-2 gap-px overflow-hidden rounded-[6px] border border-border bg-border xl:grid-cols-4',
+        'grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-border bg-border xl:grid-cols-4',
         className
       )}
     >
@@ -267,7 +270,7 @@ function SummaryRow({ label, value }) {
 
 function ChartCard({ title, subtitle, children, value, valueLabel }) {
   return (
-    <section className="overflow-hidden rounded-[6px] border border-border bg-surface">
+    <section className="overflow-hidden rounded-xl border border-border bg-surface">
       <div className="flex items-start justify-between gap-4 border-b border-border px-4 py-3.5 sm:px-5">
         <div className="min-w-0">
           <h2 className="text-sm font-semibold text-ink">{title}</h2>
@@ -315,7 +318,7 @@ function ViewHeader({ eyebrow, title, description, actions }) {
 
 function LivePill({ connected, labelConnected, labelReconnecting }) {
   return (
-    <span className="inline-flex h-9 items-center gap-2 rounded-[6px] border border-border bg-surface px-3 text-[11px] font-medium text-ink-secondary">
+    <span className="inline-flex h-9 items-center gap-2 rounded-xl border border-border bg-surface px-3 text-[11px] font-medium text-ink-secondary">
       <span
         aria-hidden="true"
         className={cn(
@@ -355,8 +358,8 @@ function ViewLink({ children, onClick }) {
 
 function EmptyState({ icon: Icon, title, description, action }) {
   return (
-    <div className="flex min-h-[200px] flex-col items-center justify-center rounded-[6px] border border-dashed border-border bg-surface-muted p-6 text-center">
-      <span className="grid h-10 w-10 place-items-center rounded-[6px] border border-border bg-surface text-ink-muted">
+    <div className="flex min-h-[200px] flex-col items-center justify-center rounded-xl border border-dashed border-border bg-surface-muted p-6 text-center">
+      <span className="grid h-10 w-10 place-items-center rounded-xl border border-border bg-surface text-ink-muted">
         <Icon aria-hidden="true" className="h-5 w-5" />
       </span>
       <p className="mt-3 text-sm font-semibold text-ink">{title}</p>
@@ -387,7 +390,7 @@ function AdminSidebar({ activeView, onViewChange }) {
                 onClick={() => onViewChange(view.id)}
                 aria-current={isActive ? 'page' : undefined}
                 className={cn(
-                  'inline-flex items-center gap-2 rounded-[6px] border px-3 py-2 text-sm font-medium transition-colors duration-200',
+                  'inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-sm font-medium transition-colors duration-200',
                   isActive
                     ? 'border-forest-border bg-forest-active text-forest-ink'
                     : 'border-transparent text-forest-muted hover:bg-white/5 hover:text-forest-ink'
@@ -430,7 +433,7 @@ function AdminSidebar({ activeView, onViewChange }) {
                       onClick={() => onViewChange(view.id)}
                       aria-current={isActive ? 'page' : undefined}
                       className={cn(
-                        'relative flex w-full items-center gap-3 rounded-[6px] border px-3 py-2.5 text-left transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-forest-accent/30',
+                        'relative flex w-full items-center gap-3 rounded-xl border px-3 py-2.5 text-left transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-forest-accent/30',
                         isActive
                           ? 'border-forest-border bg-forest-active text-forest-ink'
                           : 'border-transparent text-forest-muted hover:bg-white/[0.05] hover:text-forest-ink'
@@ -470,7 +473,7 @@ function AdminSidebar({ activeView, onViewChange }) {
           ))}
 
           <div className="mt-auto pt-6">
-            <div className="rounded-[6px] border border-forest-border bg-white/[0.04] p-3.5">
+            <div className="rounded-xl border border-forest-border bg-white/[0.04] p-3.5">
               <div className="flex items-center gap-2 text-forest-accent">
                 <ShieldCheck aria-hidden="true" className="h-4 w-4" />
                 <p className="text-xs font-semibold text-forest-ink">
@@ -530,7 +533,7 @@ function CommandView({
       {analyticsError && (
         <div
           role="alert"
-          className="mt-5 flex items-start gap-2 rounded-[6px] border border-signal-danger-border bg-signal-danger-soft px-3 py-3 text-sm text-signal-danger-ink"
+          className="mt-5 flex items-start gap-2 rounded-xl border border-signal-danger-border bg-signal-danger-soft px-3 py-3 text-sm text-signal-danger-ink"
         >
           <AlertCircle aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0" />
           {analyticsError}
@@ -650,7 +653,7 @@ function CommandView({
             <button
               type="button"
               onClick={() => onViewChange('facilities')}
-              className="flex items-center justify-between gap-3 rounded-[6px] border border-border bg-surface px-4 py-3 text-left transition-colors hover:border-brand hover:bg-surface-strong"
+              className="flex items-center justify-between gap-3 rounded-xl border border-border bg-surface px-4 py-3 text-left transition-colors hover:border-brand hover:bg-surface-strong"
             >
               <span>
                 <span className="block text-sm font-semibold text-ink">
@@ -666,7 +669,7 @@ function CommandView({
             <button
               type="button"
               onClick={() => onViewChange('analytics')}
-              className="flex items-center justify-between gap-3 rounded-[6px] border border-border bg-surface px-4 py-3 text-left transition-colors hover:border-brand hover:bg-surface-strong"
+              className="flex items-center justify-between gap-3 rounded-xl border border-border bg-surface px-4 py-3 text-left transition-colors hover:border-brand hover:bg-surface-strong"
             >
               <span>
                 <span className="block text-sm font-semibold text-ink">
@@ -725,8 +728,16 @@ function CommandView({
   );
 }
 
-function EncountersView({ activeEncounters, activeQueue }) {
+function EncountersView({ activeEncounters, activeQueue, focusPatientId }) {
   const [focusedId, setFocusedId] = useState('');
+  const [doctors, setDoctors] = useState([]);
+  const [doctorsLoading, setDoctorsLoading] = useState(true);
+  const [doctorsError, setDoctorsError] = useState('');
+  const [doctorSelection, setDoctorSelection] = useState(null);
+  const [assignmentLoading, setAssignmentLoading] = useState(false);
+  const [assignmentError, setAssignmentError] = useState(null);
+  const [assignmentSuccess, setAssignmentSuccess] = useState(null);
+  const upsertEncounter = useTriageStore((state) => state.upsertEncounter);
 
   const sortedEncounters = useMemo(() => {
     return [...activeQueue].sort((a, b) => {
@@ -742,9 +753,104 @@ function EncountersView({ activeEncounters, activeQueue }) {
   }, [activeQueue]);
 
   const focusedEncounter =
+    sortedEncounters.find(
+      (encounter) => encounter.patient_id === focusPatientId
+    ) ??
     sortedEncounters.find((encounter) => encounter.id === focusedId) ??
     sortedEncounters[0] ??
     null;
+
+  useEffect(() => {
+    if (!focusPatientId) return;
+    const match = sortedEncounters.find(
+      (encounter) => encounter.patient_id === focusPatientId
+    );
+    if (match) setFocusedId(match.id);
+  }, [focusPatientId, sortedEncounters]);
+
+  useEffect(() => {
+    let active = true;
+
+    api
+      .get('/auth/users')
+      .then(({ data }) => {
+        if (active) {
+          setDoctors(
+            (Array.isArray(data) ? data : data?.users ?? []).filter(
+              (user) => user.role === 'DOCTOR'
+            )
+          );
+        }
+      })
+      .catch((requestError) => {
+        if (active) {
+          setDoctorsError(
+            getApiErrorMessage(requestError, 'Unable to load doctor accounts.')
+          );
+        }
+      })
+      .finally(() => {
+        if (active) setDoctorsLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const selectedDoctorId =
+    doctorSelection?.encounterId === focusedEncounter?.id
+      ? doctorSelection.doctorId
+      : focusedEncounter?.assigned_doctor_id ?? '';
+
+  const activePatientCounts = useMemo(() => {
+    const counts = new Map();
+    activeEncounters.forEach((encounter) => {
+      if (encounter.assigned_doctor_id) {
+        counts.set(
+          encounter.assigned_doctor_id,
+          (counts.get(encounter.assigned_doctor_id) ?? 0) + 1
+        );
+      }
+    });
+    return counts;
+  }, [activeEncounters]);
+
+  const canAssignDoctor = [
+    'TRIAGED',
+    'ROUTING',
+    'AWAITING_ACCEPTANCE',
+  ].includes(focusedEncounter?.status);
+
+  const assignDoctor = async () => {
+    if (!focusedEncounter?.id || !selectedDoctorId) return;
+
+    setAssignmentLoading(true);
+    setAssignmentError(null);
+    setAssignmentSuccess(null);
+
+    try {
+      const { data } = await api.post(
+        `/encounters/${focusedEncounter.id}/assign-doctor`,
+        { doctor_id: selectedDoctorId }
+      );
+      upsertEncounter(data.encounter);
+      setAssignmentSuccess({
+        encounterId: data.encounter.id,
+        message: `${data.encounter.assigned_doctor_name} assigned to this encounter.`,
+      });
+    } catch (requestError) {
+      setAssignmentError({
+        encounterId: focusedEncounter.id,
+        message: getApiErrorMessage(
+          requestError,
+          'Unable to assign this doctor.'
+        ),
+      });
+    } finally {
+      setAssignmentLoading(false);
+    }
+  };
 
   const criticalCount = sortedEncounters.filter(
     (encounter) => encounter.acuity === 'CRITICAL'
@@ -763,7 +869,7 @@ function EncountersView({ activeEncounters, activeQueue }) {
         title="Active encounters"
         description="Every open case on the shared encounter backbone. Select a case to inspect its rail, destination and assigned clinician."
         actions={
-          <span className="inline-flex items-center gap-2 rounded-[4px] border border-border bg-surface px-3 py-1.5 text-xs font-medium text-ink-secondary">
+          <span className="inline-flex items-center gap-2 rounded-lg border border-border bg-surface px-3 py-1.5 text-xs font-medium text-ink-secondary">
             <span
               aria-hidden="true"
               className="h-1.5 w-1.5 rounded-[1px] bg-brand"
@@ -814,7 +920,7 @@ function EncountersView({ activeEncounters, activeQueue }) {
         </div>
       ) : (
         <div className="mt-6 space-y-6">
-          <section className="overflow-hidden rounded-[6px] border border-border bg-surface">
+          <section className="overflow-hidden rounded-xl border border-border bg-surface">
             <div className="flex flex-col gap-2 border-b border-border px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <h2 className="text-lg font-semibold text-ink">
@@ -824,7 +930,7 @@ function EncountersView({ activeEncounters, activeQueue }) {
                   Sorted by acuity, then most recent update.
                 </p>
               </div>
-              <span className="inline-flex w-fit items-center gap-2 rounded-[4px] border border-border bg-surface-muted px-2.5 py-1 text-xs font-medium text-ink-secondary">
+              <span className="inline-flex w-fit items-center gap-2 rounded-lg border border-border bg-surface-muted px-2.5 py-1 text-xs font-medium text-ink-secondary">
                 <ShieldCheck aria-hidden="true" className="h-3.5 w-3.5" />
                 Shared record
               </span>
@@ -854,7 +960,7 @@ function EncountersView({ activeEncounters, activeQueue }) {
                         <span className="flex min-w-0 items-center gap-2.5">
                           <span
                             className={cn(
-                              'grid h-8 w-8 shrink-0 place-items-center rounded-[6px] border text-[10px] font-semibold',
+                              'grid h-8 w-8 shrink-0 place-items-center rounded-xl border text-[10px] font-semibold',
                               isFocused
                                 ? 'border-brand bg-brand-soft text-brand-strong'
                                 : 'border-border bg-surface-muted text-ink-secondary'
@@ -951,7 +1057,7 @@ function EncountersView({ activeEncounters, activeQueue }) {
                           <div className="flex items-center gap-2.5">
                             <span
                               className={cn(
-                                'grid h-8 w-8 shrink-0 place-items-center rounded-[6px] border text-[10px] font-semibold',
+                                'grid h-8 w-8 shrink-0 place-items-center rounded-xl border text-[10px] font-semibold',
                                 isFocused
                                   ? 'border-brand bg-brand-soft text-brand-strong'
                                   : 'border-border bg-surface-muted text-ink-secondary'
@@ -1036,7 +1142,7 @@ function EncountersView({ activeEncounters, activeQueue }) {
                 <div className="mt-5 grid gap-6 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
                   <div>
                     <div className="flex items-center gap-3 border-b border-border pb-4">
-                      <span className="grid h-10 w-10 shrink-0 place-items-center rounded-[6px] border border-border bg-surface-muted text-xs font-semibold text-ink-secondary">
+                      <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-border bg-surface-muted text-xs font-semibold text-ink-secondary">
                         {initials(encounterPatientName(focusedEncounter))}
                       </span>
                       <div className="min-w-0">
@@ -1082,6 +1188,104 @@ function EncountersView({ activeEncounters, activeQueue }) {
                       )}
                     />
                   </dl>
+                </div>
+
+                <div className="mt-5 border-t border-border pt-4">
+                  <label
+                    htmlFor="encounter-doctor"
+                    className="block text-sm font-semibold text-ink"
+                  >
+                    Assign doctor
+                  </label>
+                  <p className="mt-1 text-xs text-ink-muted">
+                    Each doctor can have at most 2 active patient encounters.
+                    Assignment is locked after a doctor accepts the case.
+                  </p>
+                  <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+                    <select
+                      id="encounter-doctor"
+                      value={selectedDoctorId}
+                      onChange={(event) => {
+                        setDoctorSelection({
+                          encounterId: focusedEncounter.id,
+                          doctorId: event.target.value,
+                        });
+                        setAssignmentError(null);
+                        setAssignmentSuccess(null);
+                      }}
+                      disabled={doctorsLoading || !canAssignDoctor}
+                      className="h-10 min-w-0 flex-1 rounded-xl border border-border bg-surface px-3 text-sm text-ink focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      <option value="">
+                        {doctorsLoading ? 'Loading doctors…' : 'Select a doctor'}
+                      </option>
+                      {doctors.map((doctor) => {
+                        const activeCount =
+                          activePatientCounts.get(doctor.id) ?? 0;
+                        const isCurrent =
+                          doctor.id === focusedEncounter.assigned_doctor_id;
+                        const isFull = activeCount >= 2 && !isCurrent;
+
+                        return (
+                          <option
+                            key={doctor.id}
+                            value={doctor.id}
+                            disabled={isFull}
+                          >
+                            {doctor.name} · {activeCount}/2 active
+                            {doctor.specialty ? ` · ${doctor.specialty}` : ''}
+                          </option>
+                        );
+                      })}
+                    </select>
+                    <button
+                      type="button"
+                      onClick={assignDoctor}
+                      disabled={
+                        assignmentLoading ||
+                        !canAssignDoctor ||
+                        !selectedDoctorId ||
+                        selectedDoctorId === focusedEncounter.assigned_doctor_id
+                      }
+                      className="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-brand-solid px-4 text-sm font-semibold text-white transition-colors hover:bg-brand-strong disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {assignmentLoading && (
+                        <Loader2
+                          aria-hidden="true"
+                          className="h-4 w-4 animate-spin"
+                        />
+                      )}
+                      {assignmentLoading ? 'Assigning…' : 'Assign doctor'}
+                    </button>
+                  </div>
+                  {doctorsError && (
+                    <p role="alert" className="mt-2 text-sm text-signal-danger-ink">
+                      {doctorsError}
+                    </p>
+                  )}
+                  {assignmentError?.encounterId === focusedEncounter.id && (
+                    <p role="alert" className="mt-2 text-sm text-signal-danger-ink">
+                      {assignmentError.message}
+                    </p>
+                  )}
+                  {assignmentSuccess?.encounterId === focusedEncounter.id && (
+                    <p role="status" className="mt-2 text-sm text-signal-success-ink">
+                      {assignmentSuccess.message}
+                    </p>
+                  )}
+                  {!canAssignDoctor && (
+                    <p className="mt-2 text-xs text-ink-muted">
+                      {focusedEncounter.status === 'CLOSED'
+                        ? 'Closed encounters cannot be reassigned.'
+                        : 'This encounter can no longer be reassigned.'}
+                    </p>
+                  )}
+                  {!doctorsLoading && doctors.length === 0 && (
+                    <p className="mt-2 text-xs text-ink-muted">
+                      No doctor accounts are available. Refresh after adding a
+                      doctor account.
+                    </p>
+                  )}
                 </div>
               </ClinicalCard>
             </div>
@@ -1205,7 +1409,7 @@ function FacilitiesView({
                   whileTap={{ scale: 0.995 }}
                   transition={{ duration: 0.15 }}
                   className={cn(
-                    'rounded-[6px] border bg-surface p-5 text-left transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-brand/30',
+                    'rounded-xl border bg-surface p-5 text-left transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-brand/30',
                     isSelected
                       ? 'border-brand'
                       : 'border-border hover:border-border-strong hover:bg-surface-strong',
@@ -1303,7 +1507,7 @@ function FacilitiesView({
               every affected patient route is reassigned.
             </p>
 
-            <div className="mt-4 rounded-[6px] border border-border bg-surface-muted p-4">
+            <div className="mt-4 rounded-xl border border-border bg-surface-muted p-4">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
                   <p className="text-xs font-medium uppercase tracking-wide text-ink-muted">
@@ -1327,7 +1531,7 @@ function FacilitiesView({
               onClick={handleShock}
               disabled={!selectedFacility || isOfflineTarget || isRerouting}
               className={cn(
-                'mt-4 inline-flex h-14 w-full items-center justify-center gap-3 rounded-[6px] border px-5 text-sm font-semibold uppercase tracking-wide transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-brand/30',
+                'mt-4 inline-flex h-14 w-full items-center justify-center gap-3 rounded-xl border px-5 text-sm font-semibold uppercase tracking-wide transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-brand/30',
                 !selectedFacility || isOfflineTarget || isRerouting
                   ? 'border-signal-danger-border bg-signal-danger-soft text-signal-danger-ink'
                   : 'border-signal-danger-solid bg-signal-danger-solid text-white hover:bg-signal-danger-solid-hover'
@@ -1344,7 +1548,7 @@ function FacilitiesView({
             <div
               aria-live="polite"
               className={cn(
-                'mt-4 flex items-start gap-3 rounded-[6px] border p-4 transition-colors duration-200',
+                'mt-4 flex items-start gap-3 rounded-xl border p-4 transition-colors duration-200',
                 isRerouting
                   ? 'border-signal-danger-border bg-signal-danger-soft'
                   : 'border-border bg-surface-muted'
@@ -1455,7 +1659,7 @@ function FacilitiesView({
                 {ledger.map((route) => (
                   <li
                     key={`${route.patient_id}-${route.rerouted_at}`}
-                    className="rounded-[6px] border border-border bg-surface-muted p-4"
+                    className="rounded-xl border border-border bg-surface-muted p-4"
                   >
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <p className="text-sm font-semibold text-ink">
@@ -1534,7 +1738,7 @@ function AnalyticsView({
         description="Capacity, wait times and encounter flow derived from live facility state and the shared encounter store."
         actions={
           <>
-            <span className="inline-flex items-center gap-2 rounded-[4px] border border-border bg-surface px-3 py-1.5 text-xs font-medium text-ink-secondary">
+            <span className="inline-flex items-center gap-2 rounded-lg border border-border bg-surface px-3 py-1.5 text-xs font-medium text-ink-secondary">
               <Clock3 aria-hidden="true" className="h-3.5 w-3.5" />
               Updated {generatedAt}
             </span>
@@ -1550,7 +1754,7 @@ function AnalyticsView({
       {analyticsError && (
         <div
           role="alert"
-          className="mt-5 flex items-start gap-2 rounded-[6px] border border-signal-danger-border bg-signal-danger-soft px-3 py-3 text-sm text-signal-danger-ink"
+          className="mt-5 flex items-start gap-2 rounded-xl border border-signal-danger-border bg-signal-danger-soft px-3 py-3 text-sm text-signal-danger-ink"
         >
           <AlertCircle aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0" />
           {analyticsError}
@@ -1789,7 +1993,7 @@ function AnalyticsView({
         </ClinicalCard>
       </div>
 
-      <section className="mt-6 overflow-hidden rounded-[6px] border border-border bg-surface">
+      <section className="mt-6 overflow-hidden rounded-xl border border-border bg-surface">
         <div className="border-b border-border px-5 py-4">
           <h2 className="text-lg font-semibold text-ink">
             Facility operating detail
@@ -1963,7 +2167,7 @@ function RoleBadge({ role }) {
   return (
     <span
       className={cn(
-        'inline-flex rounded-[4px] border px-2 py-1 text-[10px] font-semibold uppercase tracking-wide',
+        'inline-flex rounded-lg border px-2 py-1 text-[10px] font-semibold uppercase tracking-wide',
         ROLE_BADGES[role] ?? ROLE_BADGES.PATIENT
       )}
     >
@@ -2028,7 +2232,7 @@ function UsersView() {
       <ViewHeader
         eyebrow="Administration"
         title="Registered users"
-        description="Accounts created through the Triage Horizon signup flow. Password hashes are stored with bcrypt and are never returned by the API."
+        description="Registered, seeded and built-in demo accounts. Password hashes are stored with bcrypt and are never returned by the API."
         actions={
           <RefreshButton
             loading={loading}
@@ -2072,14 +2276,14 @@ function UsersView() {
       {error && (
         <div
           role="alert"
-          className="mt-5 flex items-start gap-2 rounded-[6px] border border-signal-danger-border bg-signal-danger-soft px-3 py-3 text-sm text-signal-danger-ink"
+          className="mt-5 flex items-start gap-2 rounded-xl border border-signal-danger-border bg-signal-danger-soft px-3 py-3 text-sm text-signal-danger-ink"
         >
           <AlertCircle aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0" />
           {error}
         </div>
       )}
 
-      <section className="mt-6 overflow-hidden rounded-[6px] border border-border bg-surface">
+      <section className="mt-6 overflow-hidden rounded-xl border border-border bg-surface">
         <div className="flex flex-col gap-4 border-b border-border p-5 xl:flex-row xl:items-center xl:justify-between">
           <div>
             <h2 className="text-lg font-semibold text-ink">
@@ -2095,7 +2299,7 @@ function UsersView() {
             <div
               role="group"
               aria-label="Filter by role"
-              className="flex gap-1 overflow-x-auto rounded-[6px] border border-border bg-surface-muted p-1"
+              className="flex gap-1 overflow-x-auto rounded-xl border border-border bg-surface-muted p-1"
             >
               {ROLE_FILTERS.map((filter) => (
                 <button
@@ -2104,7 +2308,7 @@ function UsersView() {
                   onClick={() => setRoleFilter(filter.value)}
                   aria-pressed={roleFilter === filter.value}
                   className={cn(
-                    'shrink-0 rounded-[4px] px-2.5 py-1.5 text-xs font-medium transition-colors',
+                    'shrink-0 rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors',
                     roleFilter === filter.value
                       ? 'bg-brand-soft text-brand-strong'
                       : 'text-ink-muted hover:text-ink'
@@ -2126,7 +2330,7 @@ function UsersView() {
                 onChange={(event) => setQuery(event.target.value)}
                 placeholder="Search name, email, license…"
                 aria-label="Search registered accounts"
-                className="h-9 w-full rounded-[6px] border border-border bg-surface-muted pl-9 pr-3 text-sm text-ink placeholder:text-ink-muted transition-colors focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30 sm:w-64"
+                className="h-9 w-full rounded-xl border border-border bg-surface-muted pl-9 pr-3 text-sm text-ink placeholder:text-ink-muted transition-colors focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30 sm:w-64"
               />
             </div>
           </div>
@@ -2142,20 +2346,20 @@ function UsersView() {
           </div>
         ) : users.length === 0 ? (
           <div className="flex min-h-[280px] flex-col items-center justify-center px-6 text-center">
-            <span className="grid h-11 w-11 place-items-center rounded-[6px] border border-border bg-surface-muted text-ink-muted">
+            <span className="grid h-11 w-11 place-items-center rounded-xl border border-border bg-surface-muted text-ink-muted">
               <UsersRound aria-hidden="true" className="h-5 w-5" />
             </span>
             <p className="mt-3 text-sm font-semibold text-ink">
               No registered accounts yet
             </p>
             <p className="mt-1 max-w-sm text-sm leading-6 text-ink-muted">
-              New patient and doctor signups appear here. The demo accounts remain
-              available on the login page.
+              New patient and doctor signups, seeded clinicians and demo accounts
+              appear here.
             </p>
           </div>
         ) : filteredUsers.length === 0 ? (
           <div className="flex min-h-[280px] flex-col items-center justify-center px-6 text-center">
-            <span className="grid h-11 w-11 place-items-center rounded-[6px] border border-border bg-surface-muted text-ink-muted">
+            <span className="grid h-11 w-11 place-items-center rounded-xl border border-border bg-surface-muted text-ink-muted">
               <Search aria-hidden="true" className="h-5 w-5" />
             </span>
             <p className="mt-3 text-sm font-semibold text-ink">
@@ -2168,7 +2372,7 @@ function UsersView() {
             <button
               type="button"
               onClick={clearFilters}
-              className="mt-4 inline-flex h-9 items-center gap-2 rounded-[6px] border border-border-strong px-3 text-sm font-medium text-ink transition-colors hover:bg-surface-strong"
+              className="mt-4 inline-flex h-9 items-center gap-2 rounded-xl border border-border-strong px-3 text-sm font-medium text-ink transition-colors hover:bg-surface-strong"
             >
               Clear filters
             </button>
@@ -2185,7 +2389,7 @@ function UsersView() {
                   className="px-4 py-4 transition-colors duration-200 hover:bg-surface-strong"
                 >
                   <div className="flex items-start gap-3">
-                    <span className="grid h-8 w-8 shrink-0 place-items-center rounded-[6px] border border-border bg-surface-muted text-[10px] font-semibold text-ink-secondary">
+                    <span className="grid h-8 w-8 shrink-0 place-items-center rounded-xl border border-border bg-surface-muted text-[10px] font-semibold text-ink-secondary">
                       {initials(user.name)}
                     </span>
                     <div className="min-w-0 flex-1">
@@ -2244,7 +2448,7 @@ function UsersView() {
                     >
                       <td className="px-4 py-3.5">
                         <div className="flex items-center gap-2.5">
-                          <span className="grid h-8 w-8 shrink-0 place-items-center rounded-[6px] border border-border bg-surface-muted text-[10px] font-semibold text-ink-secondary">
+                          <span className="grid h-8 w-8 shrink-0 place-items-center rounded-xl border border-border bg-surface-muted text-[10px] font-semibold text-ink-secondary">
                             {initials(user.name)}
                           </span>
                           <div className="min-w-0">
@@ -2306,6 +2510,9 @@ export default function AdminPortal() {
   const setEncounters = useTriageStore((state) => state.setEncounters);
   const socketConnected = useTriageStore((state) => state.socketConnected);
   const auth = useTriageStore((state) => state.auth);
+  const triageNotifications = useTriageStore(
+    (state) => state.triageNotifications
+  );
   const adminName = auth?.name || 'Network Admin';
 
   const [searchParams, setSearchParams] = useSearchParams();
@@ -2316,6 +2523,7 @@ export default function AdminPortal() {
 
   const changeView = (nextView) => {
     const nextParams = new URLSearchParams(searchParams);
+    nextParams.delete('patient_id');
 
     if (nextView === DEFAULT_VIEW) {
       nextParams.delete('view');
@@ -2323,6 +2531,18 @@ export default function AdminPortal() {
       nextParams.set('view', nextView);
     }
 
+    setSearchParams(nextParams, { replace: true });
+  };
+
+  const openPatientEncounter = (patientId) => {
+    if (!patientId) {
+      changeView('encounters');
+      return;
+    }
+
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.set('view', 'encounters');
+    nextParams.set('patient_id', patientId);
     setSearchParams(nextParams, { replace: true });
   };
 
@@ -2335,6 +2555,7 @@ export default function AdminPortal() {
   const [analyticsError, setAnalyticsError] = useState('');
 
   const [selectedId, setSelectedId] = useState('');
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [shockStatus, setShockStatus] = useState('idle');
   const [shockResult, setShockResult] = useState(null);
   const [shockError, setShockError] = useState('');
@@ -2547,6 +2768,9 @@ export default function AdminPortal() {
   const criticalCount = activeQueue.filter(
     (entry) => entry.acuity === 'CRITICAL'
   ).length;
+  const unreadNotificationCount = triageNotifications.filter(
+    (notification) => !notification.read
+  ).length;
 
   const capacityData = useMemo(
     () =>
@@ -2638,6 +2862,43 @@ export default function AdminPortal() {
         roleLabel="Network administration"
         userName={adminName}
         homePath="/admin"
+        rightActions={
+          <button
+            type="button"
+            onClick={() => setNotificationsOpen(true)}
+            aria-label={
+              unreadNotificationCount > 0
+                ? `Open notifications, ${unreadNotificationCount} unread`
+                : 'Open notifications'
+            }
+            className="relative grid h-9 w-9 place-items-center rounded-xl border border-border bg-surface text-ink-secondary transition-colors hover:bg-surface-strong hover:text-ink"
+          >
+            <Bell aria-hidden="true" className="h-4 w-4" />
+            {unreadNotificationCount > 0 && (
+              <span className="absolute -right-1 -top-1 grid min-h-4 min-w-4 place-items-center rounded-full bg-signal-danger px-1 text-[9px] font-bold leading-none text-white">
+                {unreadNotificationCount > 99
+                  ? '99+'
+                  : unreadNotificationCount}
+              </span>
+            )}
+          </button>
+        }
+      />
+
+      <NotificationPanel
+        isOpen={notificationsOpen}
+        onClose={() => setNotificationsOpen(false)}
+        onSelectPatient={openPatientEncounter}
+        onOpenDetails={(notification) => {
+          setNotificationsOpen(false);
+          openPatientEncounter(notification?.patient_id);
+        }}
+      />
+      <TriageNotificationPopup
+        onSelectPatient={openPatientEncounter}
+        onOpenDetails={(notification) =>
+          openPatientEncounter(notification?.patient_id)
+        }
       />
 
       <div className="mx-auto flex min-h-[calc(100vh-4rem)] w-full max-w-[1500px] flex-col lg:flex-row">
@@ -2668,6 +2929,7 @@ export default function AdminPortal() {
               <EncountersView
                 activeEncounters={activeEncounters}
                 activeQueue={activeQueue}
+                focusPatientId={searchParams.get('patient_id')}
               />
             )}
 

@@ -1,13 +1,17 @@
 import { useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Pill, X } from 'lucide-react';
+import { Pill, X, FileText, Download } from 'lucide-react';
 import useTriageStore from '../store/useTriageStore';
+import { downloadPrescriptionPdf } from '../lib/downloadPrescriptionPdf';
 
 export default function PrescriptionToast() {
   const auth = useTriageStore((state) => state.auth);
   const prescriptionToast = useTriageStore((state) => state.prescriptionToast);
   const dismissPrescriptionToast = useTriageStore(
     (state) => state.dismissPrescriptionToast
+  );
+  const openPrescriptionPdfModal = useTriageStore(
+    (state) => state.openPrescriptionPdfModal
   );
 
   useEffect(() => {
@@ -52,7 +56,7 @@ export default function PrescriptionToast() {
                   {prescriptionToast.message}
                 </p>
                 <p className="mt-1.5 font-mono text-[10px] uppercase tracking-wide text-ink-muted">
-                  {prescriptionToast.prescription_id}
+                  {prescriptionToast.prescription_id?.replace(/^RX-/i, 'TH-PR-')}
                   {prescriptionToast.medication_count
                     ? ` · ${prescriptionToast.medication_count} medication${
                         prescriptionToast.medication_count === 1 ? '' : 's'
@@ -62,6 +66,34 @@ export default function PrescriptionToast() {
                     ? ` · ${prescriptionToast.doctor_name}`
                     : ''}
                 </p>
+
+                <div className="mt-2.5 flex flex-wrap items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      openPrescriptionPdfModal(
+                        prescriptionToast.prescription || prescriptionToast
+                      );
+                      dismissPrescriptionToast();
+                    }}
+                    className="inline-flex items-center gap-1.5 rounded-lg bg-teal-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition-all hover:bg-teal-700 active:scale-95"
+                  >
+                    <FileText className="h-3.5 w-3.5" />
+                    <span>View Official PDF Slip</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      downloadPrescriptionPdf(
+                        prescriptionToast.prescription || prescriptionToast
+                      );
+                    }}
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--success-border)] bg-[var(--success-soft)] px-2.5 py-1.5 text-xs font-semibold text-[var(--success-ink)] transition-all hover:bg-emerald-100 dark:hover:bg-emerald-950/50 active:scale-95"
+                  >
+                    <Download className="h-3.5 w-3.5" />
+                    <span>Download</span>
+                  </button>
+                </div>
               </div>
 
               <button

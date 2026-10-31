@@ -338,7 +338,7 @@ export default function AdminMap({ className }) {
     <section
       aria-label="Live facility network map"
       className={cn(
-        'overflow-hidden rounded-[6px] border border-border bg-surface',
+        'overflow-hidden rounded-xl border border-border bg-surface',
         className
       )}
     >
@@ -348,7 +348,7 @@ export default function AdminMap({ className }) {
           <h2 className="text-sm font-semibold text-ink">
             Live network map
           </h2>
-          <span className="rounded-[4px] border border-brand-border bg-brand-soft px-1.5 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wide text-brand-strong">
+          <span className="rounded-lg border border-brand-border bg-brand-soft px-1.5 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wide text-brand-strong">
             {facilities.length || 5} nodes
           </span>
         </div>
@@ -452,18 +452,18 @@ export default function AdminMap({ className }) {
           )}
         </MapContainer>
 
-        <div className="pointer-events-none absolute inset-x-2 top-2 z-[1000] rounded-[6px] border border-border bg-surface-muted/[0.85] px-3 py-2 backdrop-blur-sm sm:inset-x-auto sm:right-3 sm:top-3 sm:w-[min(320px,calc(100%-1.5rem))] sm:px-3.5 sm:py-3">
+        <div className="pointer-events-none absolute inset-x-2 top-2 z-[1000] rounded-xl border border-border bg-surface-muted/[0.85] px-3 py-2 backdrop-blur-sm sm:inset-x-auto sm:right-3 sm:top-3 sm:w-[min(320px,calc(100%-1.5rem))] sm:px-3.5 sm:py-3">
           <div className="flex items-center justify-between gap-2">
             <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-muted">
               Active route
             </p>
             {rerouting ? (
-              <span className="inline-flex items-center gap-1 rounded-[4px] border border-signal-amber-border bg-signal-amber-soft px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-signal-amber-ink">
+              <span className="inline-flex items-center gap-1 rounded-lg border border-signal-amber-border bg-signal-amber-soft px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-signal-amber-ink">
                 <Ambulance aria-hidden="true" className="h-3 w-3" />
                 Rerouting…
               </span>
             ) : (
-              <span className="inline-flex items-center gap-1 rounded-[4px] border border-brand-border bg-brand-soft px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-brand-strong">
+              <span className="inline-flex items-center gap-1 rounded-lg border border-brand-border bg-brand-soft px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-brand-strong">
                 <Crosshair aria-hidden="true" className="h-3 w-3" />
                 Live
               </span>
@@ -496,7 +496,7 @@ export default function AdminMap({ className }) {
           )}
         </div>
 
-        <div className="pointer-events-none absolute bottom-8 left-3 z-[1000] flex flex-wrap items-center gap-x-3 gap-y-1.5 rounded-[6px] border border-border bg-surface-muted/[0.85] px-3 py-2 backdrop-blur-sm">
+        <div className="pointer-events-none absolute bottom-8 left-3 z-[1000] flex flex-wrap items-center gap-x-3 gap-y-1.5 rounded-xl border border-border bg-surface-muted/[0.85] px-3 py-2 backdrop-blur-sm">
           <LegendItem color={COLORS.green} label="Available" />
           <LegendItem color={COLORS.amber} label="Busy / Limited" />
           <LegendItem color={COLORS.red} label="Offline" pulse />

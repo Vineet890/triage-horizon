@@ -4,6 +4,7 @@ import {
   evaluateAdherenceRisk,
   evaluateMentalHealthContext,
 } from '../agent/tools.js';
+import { rankFacilities } from './facilityRouting.js';
 
 const ACUITY_ORDER = ['LOW', 'MODERATE', 'HIGH', 'CRITICAL'];
 
@@ -64,6 +65,23 @@ const PROTOCOLS = {
     emergency: false,
     adherence_sensitive: false,
   },
+  DERMATOLOGY: {
+    code: 'DERM-001',
+    label: 'Dermatology Protocol',
+    required_specialty: 'dermatology',
+    preferred_types: ['primary_care_clinic', 'multi_specialty_hospital'],
+    emergency: false,
+    adherence_sensitive: false,
+  },
+};
+
+const MODEL_PROTOCOLS = {
+  'CARD-001': PROTOCOLS.CARDIAC,
+  'DERM-001': PROTOCOLS.DERMATOLOGY,
+  'GEN-001': { ...PROTOCOLS.GENERAL, code: 'GEN-001' },
+  'GI-001': { ...PROTOCOLS.GASTRO, code: 'GI-001' },
+  'NEURO-001': { ...PROTOCOLS.STROKE, code: 'NEURO-001' },
+  'PSY-001': { ...PROTOCOLS.MENTAL_HEALTH, code: 'PSY-001' },
 };
 
 function normalizeList(value) {
@@ -120,6 +138,12 @@ function includesTerm(text, term) {
 
 function includesAny(text, terms) {
   return terms.some((term) => includesTerm(text, term));
+}
+
+export function getProtocolByCode(code) {
+  return MODEL_PROTOCOLS[code] ??
+    Object.values(PROTOCOLS).find((protocol) => protocol.code === code) ??
+    null;
 }
 
 function hasPositivePattern(text, pattern) {
@@ -216,6 +240,20 @@ export function matchProtocol(symptom) {
     return PROTOCOLS.MENTAL_HEALTH;
   }
 
+  if (
+    includesAny(text, [
+      'rash',
+      'skin irritation',
+      'skin lesion',
+      'itchy skin',
+      'hives',
+      'eczema',
+      'dermatitis',
+    ])
+  ) {
+    return PROTOCOLS.DERMATOLOGY;
+  }
+
   if (includesAny(text, ['fever', 'temperature', 'chills', 'infection'])) {
     return PROTOCOLS.FEBRILE;
   }
@@ -223,14 +261,14 @@ export function matchProtocol(symptom) {
   return PROTOCOLS.GENERAL;
 }
 
-function scoreAcuity(symptom) {
+export function scoreAcuity(symptom) {
   const text = String(symptom ?? '').toLowerCase();
 
   const criticalPatterns = [
-    /chest pain.*(sweat|radiat|crush|pressure|short)/,
-    /(sweat|radiat|crush).*chest pain/,
+    /chest (?:pain|pressure|tightness).*(sweat|radiat|crush|severe|breathless|shortness of breath)/,
+    /(sweat|radiat|crush|severe|breathless|shortness of breath).*chest (?:pain|pressure|tightness)/,
     /(face droop|facial droop|slurred speech|arm weakness|one-sided weakness|weakness on one side)/,
-    /(unconscious|unresponsive|not breathing|stopped breathing|severe bleeding|bleeding heavily|seizure)/,
+    /(unconscious|unresponsive|not breathing|stopped breathing|severe bleeding|bleeding heavily|uncontrolled bleeding|seizure)/,
     /(suicidal|overdose|self-harm|self harm)/,
   ];
 
@@ -239,11 +277,11 @@ function scoreAcuity(symptom) {
   }
 
   const highPatterns = [
-    /(severe|worst).*(pain|headache|abdominal|chest)/,
+    /(severe|worst).*(pain|headache|abdominal|chest|bleeding)/,
     /(9|10)\s*\/\s*10/,
-    /(cannot breathe|can't breathe|breathless at rest|shortness of breath at rest)/,
+    /(cannot breathe|can't breathe|difficulty breathing at rest|breathless at rest|shortness of breath at rest)/,
     /(confusion|confused|disoriented)/,
-    /(fever|temperature).*(39|40|41)/,
+    /(fever|temperature|temp).*(?:39(?:\.\d+)?|40(?:\.\d+)?|41(?:\.\d+)?)(?:\s*°?\s*c)?\b/,
     /(vomiting blood|blood in vomit|black stool)/,
     /(palpitations|heart racing).*(dizziness|dizzy|faint|lightheaded)/,
     /(sudden).*(weakness|numbness|vision loss)/,
@@ -253,15 +291,57 @@ function scoreAcuity(symptom) {
     return 'HIGH';
   }
 
+  const temperature = text.match(
+    /\b(?:temperature|temp|fever)\s*(?:(?:is|of|at)\s*)?(\d{2,3}(?:\.\d+)?)\s*°?\s*([cf])?\b/
+  );
+  if (temperature && !isNegated(text, temperature.index)) {
+    const reading = Number(temperature[1]);
+    const celsius = Number(
+      (
+        temperature[2] === 'f' ? ((reading - 32) * 5) / 9 : reading
+      ).toFixed(1)
+    );
+    if (celsius >= 39) return 'HIGH';
+    if (celsius >= 38) return 'MODERATE';
+    if (celsius < 38 && /\b(mild|slight|low[-\s]?grade)\b/.test(text)) {
+      return 'LOW';
+    }
+  }
+
+  const mildSymptomPattern =
+    /\b(?:mild|slight|minor)\s+(?:headache|head pain|heartburn|indigestion|reflux|sore throat|runny nose|nasal congestion|muscle ache|muscle soreness)\b/;
+  const standardPatterns = [
+    /\b(?:routine|annual)\s+(?:health\s+)?check(?:up)?\b/,
+    /\bno symptoms\b/,
+    /\bno health concerns\b/,
+    /\bfeeling well\b/,
+    /\b(?:headache|head pain)\b/,
+  ];
   const moderatePatterns = [
     /(wheez|asthma|breathless|shortness of breath)/,
     /(fever|temperature)/,
     /(abdominal pain|stomach pain|vomiting|diarrhea)/,
-    /(migraine|headache)/,
+    /(migraine)/,
     /(urinary|burning urination)/,
     /(palpitations|heart racing)/,
     /(chest tightness)/,
+    /(nausea|dizziness|dizzy)/,
   ];
+
+  const hasOtherModerateSymptom = (value) =>
+    moderatePatterns.some((pattern) => hasPositivePattern(value, pattern));
+  const withoutMildSymptom = text.replace(mildSymptomPattern, ' ');
+  const hasMildPresentation = hasPositivePattern(text, mildSymptomPattern);
+  const hasExplicitNormalPresentation = standardPatterns.some((pattern) =>
+    hasPositivePattern(text, pattern)
+  );
+
+  if (
+    (hasExplicitNormalPresentation || hasMildPresentation) &&
+    !hasOtherModerateSymptom(withoutMildSymptom)
+  ) {
+    return 'LOW';
+  }
 
   if (moderatePatterns.some((pattern) => hasPositivePattern(text, pattern))) {
     return 'MODERATE';
@@ -274,17 +354,6 @@ function escalateAcuity(acuity) {
   const index = ACUITY_ORDER.indexOf(acuity);
   if (index < 0 || index >= ACUITY_ORDER.length - 1) return acuity;
   return ACUITY_ORDER[index + 1];
-}
-
-function facilitySpecialtyMatch(facility, specialty) {
-  if (!specialty) return false;
-
-  const normalized = specialty.toLowerCase().replace(/\s+/g, '_');
-
-  return (facility.specialties ?? []).some((entry) => {
-    const value = String(entry).toLowerCase().replace(/\s+/g, '_');
-    return value === normalized || value.includes(normalized);
-  });
 }
 
 function reasonForRejection(facility, selected, careTier, mentalContext) {
@@ -300,8 +369,12 @@ function reasonForRejection(facility, selected, careTier, mentalContext) {
     return 'Mental-health services only; cannot assess or treat the presenting complaint.';
   }
 
-  if (careTier === 'emergency' && !facility.has_icu) {
-    return 'No ICU capability; unsafe destination for an emergency presentation.';
+  if (
+    careTier === 'emergency' &&
+    !facility.has_icu &&
+    !facility.has_cath_lab
+  ) {
+    return 'No ICU or cardiac catheterization capability for an emergency presentation.';
   }
 
   if (
@@ -335,20 +408,14 @@ function buildTelehealthDestination(mental) {
 function selectDestination({ acuity, careTier, protocol, mental }) {
   const allFacilities = facilityStateManager.getAllStates();
 
-  const available = allFacilities.filter(
-    (facility) => facility.status !== 'OFFLINE' && facility.capacity_pct < 95
-  );
-
   if (careTier === 'telehealth') {
-    if (mental.has_context && mental.facility_type === 'mental_health_clinic') {
-      const mentalFacility = [...available]
-        .filter((facility) => facility.type === 'mental_health_clinic')
-        .sort((a, b) => {
-          const statusDelta =
-            Number(a.status === 'AVAILABLE') - Number(b.status === 'AVAILABLE');
-          if (statusDelta !== 0) return -statusDelta;
-          return a.eta_min - b.eta_min;
-        })[0];
+    if (mental.has_context || protocol.required_specialty === 'mental_health') {
+      const mentalFacility = rankFacilities({
+        facilities: allFacilities,
+        protocol,
+        careTier,
+        mentalHealthContext: true,
+      })[0];
 
       if (mentalFacility) {
         const selected = {
@@ -391,67 +458,26 @@ function selectDestination({ acuity, careTier, protocol, mental }) {
     };
   }
 
-  let candidates = available.filter(
-    (facility) => facility.type !== 'mental_health_clinic' || mental.has_context
-  );
-
-  if (careTier === 'emergency') {
-    const capable = candidates.filter(
-      (facility) => facility.has_icu || facility.has_cath_lab
-    );
-
-    if (capable.length > 0) {
-      candidates = capable;
-    }
-  } else {
-    const routineCapable = candidates.filter(
-      (facility) => facility.capacity_pct < 90 && facility.er_wait_min < 60
-    );
-
-    if (routineCapable.length > 0) {
-      candidates = routineCapable;
-    }
-  }
+  const candidates = rankFacilities({
+    facilities: allFacilities,
+    protocol,
+    acuity,
+    careTier,
+    mentalHealthContext:
+      mental.has_context || protocol.required_specialty === 'mental_health',
+  });
 
   if (candidates.length === 0) {
-    const selected = buildTelehealthDestination(mental);
     return {
-      selected,
+      selected: null,
       rejected: allFacilities.map((facility) => ({
         id: facility.id,
         name: facility.name,
-        reason:
-          'No in-person facility currently has safe capacity; telehealth is the interim safe pathway.',
+        reason: reasonForRejection(facility, null, careTier, mental.has_context),
       })),
     };
   }
-
-  const scored = [...candidates].sort((a, b) => {
-    const aPreferred = protocol.preferred_types.includes(a.type) ? 1 : 0;
-    const bPreferred = protocol.preferred_types.includes(b.type) ? 1 : 0;
-    if (aPreferred !== bPreferred) return bPreferred - aPreferred;
-
-    const aSpecialty = facilitySpecialtyMatch(a, protocol.required_specialty)
-      ? 1
-      : 0;
-    const bSpecialty = facilitySpecialtyMatch(b, protocol.required_specialty)
-      ? 1
-      : 0;
-    if (aSpecialty !== bSpecialty) return bSpecialty - aSpecialty;
-
-    if (careTier === 'emergency') {
-      const aCapability =
-        Number(a.has_icu) + Number(a.has_cath_lab) + Number(a.has_icu && a.has_cath_lab);
-      const bCapability =
-        Number(b.has_icu) + Number(b.has_cath_lab) + Number(b.has_icu && b.has_cath_lab);
-      if (aCapability !== bCapability) return bCapability - aCapability;
-    }
-
-    if (a.eta_min !== b.eta_min) return a.eta_min - b.eta_min;
-    return a.capacity_pct - b.capacity_pct;
-  });
-
-  const selected = scored[0];
+  const selected = candidates[0];
 
   const destination = {
     ...selected,
@@ -648,13 +674,38 @@ function buildRationale({
  * the future live-LLM pipeline so the frontend and encounter model do not need
  * to change when the model is wired in.
  */
-export function evaluateTriage({ patient, symptom }) {
+export function evaluateTriage({ patient, symptom, modelDecision = null }) {
   const normalizedSymptom = String(symptom ?? '').trim();
-  const protocol = matchProtocol(normalizedSymptom);
+  const matchedProtocol = matchProtocol(normalizedSymptom);
+  const protocol =
+    getProtocolByCode(modelDecision?.protocol_code) ?? matchedProtocol;
   const adherence = evaluateAdherenceRisk(patient);
   const mental = evaluateMentalHealthContext(patient, normalizedSymptom);
+  const mentalContext =
+    mental.has_context || protocol.required_specialty === 'mental_health';
+  const effectiveMental = {
+    ...mental,
+    has_context: mentalContext,
+    facility_type:
+      mental.facility_type ??
+      (mentalContext ? 'mental_health_clinic' : null),
+  };
 
   let acuity = scoreAcuity(normalizedSymptom);
+  const uncomplicatedHeadache =
+    /\b(?:headache|head pain)\b/i.test(normalizedSymptom) &&
+    acuity === 'LOW';
+  const modelAcuity = ACUITY_ORDER.includes(modelDecision?.acuity)
+    ? modelDecision.acuity
+    : null;
+
+  if (
+    !uncomplicatedHeadache &&
+    modelAcuity &&
+    ACUITY_ORDER.indexOf(modelAcuity) > ACUITY_ORDER.indexOf(acuity)
+  ) {
+    acuity = modelAcuity;
+  }
 
   // Adherence escalation is applied only when the presentation is directly
   // adherence-sensitive. A low-acuity mental-health presentation keeps its
@@ -662,7 +713,7 @@ export function evaluateTriage({ patient, symptom }) {
   if (
     adherence.acuity_escalation &&
     protocol.adherence_sensitive &&
-    !mental.has_context
+    !mentalContext
   ) {
     acuity = escalateAcuity(acuity);
   }
@@ -677,7 +728,7 @@ export function evaluateTriage({ patient, symptom }) {
     careTier = 'telehealth';
   }
 
-  if (mental.has_context && careTier !== 'emergency') {
+  if (mentalContext && careTier !== 'emergency') {
     careTier = 'telehealth';
   }
 
@@ -686,7 +737,7 @@ export function evaluateTriage({ patient, symptom }) {
     acuity,
     careTier,
     protocol,
-    mental,
+    mental: effectiveMental,
   });
 
   const specialFlags = buildSpecialFlags({
@@ -694,16 +745,50 @@ export function evaluateTriage({ patient, symptom }) {
     symptom: normalizedSymptom,
     protocol,
     adherence,
-    mental,
+    mental: effectiveMental,
   });
+  if (Array.isArray(modelDecision?.special_flags)) {
+    specialFlags.push(
+      ...modelDecision.special_flags
+        .filter((flag) => typeof flag === 'string' && flag.trim())
+        .map((flag) => flag.trim().slice(0, 120))
+    );
+  }
 
-  const riskModifiers = buildRiskModifiers({ adherence, mental });
+  const riskModifiers = buildRiskModifiers({
+    adherence,
+    mental: effectiveMental,
+  });
+  if (Array.isArray(modelDecision?.risk_modifiers)) {
+    for (const [index, modifier] of modelDecision.risk_modifiers.entries()) {
+      const label =
+        typeof modifier === 'string'
+          ? modifier
+          : modifier && typeof modifier.label === 'string'
+            ? modifier.label
+            : '';
+      const detail =
+        modifier && typeof modifier === 'object' &&
+        typeof modifier.detail === 'string'
+          ? modifier.detail
+          : label;
+
+      if (!label.trim()) continue;
+      riskModifiers.push({
+        key: `ml_modifier_${index + 1}`,
+        label: label.trim().slice(0, 120),
+        level: 'INFO',
+        detail: detail.trim().slice(0, 300),
+        source: 'Live triage model',
+      });
+    }
+  }
 
   const agentTrace = buildTrace({
     patient,
     protocol,
     adherence,
-    mental,
+    mental: effectiveMental,
     destination: selected,
     availableCount: availableFacilities.length,
   });
@@ -714,8 +799,28 @@ export function evaluateTriage({ patient, symptom }) {
     careTier,
     destination: selected,
     adherence,
-    mental,
+    mental: effectiveMental,
   });
+  if (modelDecision) {
+    agentRationale.push(
+      `Live model suggested ${modelDecision.protocol_code} / ${modelDecision.acuity}; deterministic protocol matching and facility routing remain authoritative.`
+    );
+    if (Array.isArray(modelDecision.evidence_summary)) {
+      agentRationale.push(
+        ...modelDecision.evidence_summary
+          .filter((item) => typeof item === 'string' && item.trim())
+          .map((item) => item.trim().slice(0, 500))
+      );
+    }
+  }
+  if (modelDecision) {
+    agentTrace.push({
+      timestamp: new Date().toISOString(),
+      tool: 'LIVE_ML_TRIAGE',
+      detail: `Retrieved ${modelDecision.protocol_code}; model acuity ${modelDecision.acuity}; final acuity ${acuity}.`,
+      status: 'ok',
+    });
+  }
 
   return {
     patient_id: patient?.id ?? null,
@@ -733,7 +838,7 @@ export function evaluateTriage({ patient, symptom }) {
     adherence,
     mental_health: mental,
     timestamp: new Date().toISOString(),
-    is_simulated: true,
+    is_simulated: !modelDecision,
   };
 }
 

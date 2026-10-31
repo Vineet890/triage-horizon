@@ -26,3 +26,20 @@ Thumbs.db
 # Misc
 coverage/
 .cache/
+
+# Python / ML
+venv/
+.venv/
+__pycache__/
+*.pyc
+
+# Environment files
+.env.*
+!.env.example
+
+# Downloaded archives
+*.zip
+
+# Generated files
+*.pkl
+*.joblib

@@ -50,6 +50,9 @@ const medicationSchema = new mongoose.Schema(
     dosage: { type: String, default: '' },
     schedule: { type: String, default: '' },
     note: { type: String, default: '' },
+    doses_per_day: { type: Number, default: 1 },
+    times: { type: [String], default: [] },
+    as_needed: { type: Boolean, default: false },
   },
   { _id: false }
 );

@@ -7,14 +7,6 @@ import { cn } from '../lib/utils';
 
 const FLASH_MS = 1500;
 
-/**
- * Lightweight, light-themed route card for the patient portal. It intentionally
- * avoids a second map: the patient only needs the destination, ETA and tier.
- *
- * The card listens to the same ROUTE_UPDATED event the admin map consumes, so a
- * Simulate Shock reroute lands here as an amber flash, an animated destination
- * swap and a persistent REROUTED badge.
- */
 export default function PatientRouteStatus({
   patientId,
   encounter,
@@ -31,6 +23,7 @@ export default function PatientRouteStatus({
   useEffect(() => {
     const handleRouteUpdated = (payload) => {
       if (!payload?.patient_id || payload.patient_id !== patientId) return;
+      if (!encounter?.id || payload.encounter_id !== encounter.id) return;
 
       setLiveRoute(payload);
       setFlashing(true);
@@ -51,24 +44,27 @@ export default function PatientRouteStatus({
         flashTimer.current = null;
       }
     };
-  }, [patientId]);
+  }, [patientId, encounter?.id]);
 
-  // A new patient or a new encounter must not inherit the previous route card.
   useEffect(() => {
     setLiveRoute(null);
     setFlashing(false);
   }, [patientId, encounter?.id]);
 
-  const activeRoute = liveRoute ?? routeUpdate ?? null;
+  const activeRoute =
+    [liveRoute, routeUpdate].find(
+      (route) => route && route.encounter_id === encounter?.id
+    ) ?? null;
   const rerouteFailed = activeRoute?.reroute_status === 'NO_ALTERNATIVE_AVAILABLE';
   const facility = rerouteFailed
     ? null
-    : liveRoute?.selected_facility ?? destination ?? null;
+    : activeRoute?.selected_facility ?? destination ?? null;
   const facilityName = rerouteFailed
     ? 'Manual care coordination'
     : facility?.name ?? encounter?.facility_name ?? null;
   const resolvedEta = rerouteFailed ? null : facility?.eta_min ?? eta ?? null;
-  const resolvedTier = liveRoute?.care_tier ?? careTier ?? encounter?.care_tier ?? null;
+  const resolvedTier =
+    activeRoute?.care_tier ?? careTier ?? encounter?.care_tier ?? null;
   const rerouted = Boolean(
     activeRoute?.previous_facility_id ||
       activeRoute?.reroute_status === 'REROUTED'
@@ -81,19 +77,21 @@ export default function PatientRouteStatus({
       aria-label="Live route status"
       aria-live="polite"
       className={cn(
-        'rounded-[6px] border bg-surface p-5 transition-colors duration-300',
-        flashing ? 'border-signal-amber-border' : 'border-border',
+        'rounded-2xl border bg-surface p-6 shadow-xs transition-all duration-300',
+        flashing
+          ? 'border-amber-400 ring-4 ring-amber-400/20 bg-amber-50/20 dark:bg-amber-950/20'
+          : 'border-border/80',
         className
       )}
     >
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-brand-strong">
-            <Route aria-hidden="true" className="h-3.5 w-3.5" />
-            Live route
+          <p className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-teal-600 dark:text-teal-400">
+            <Route aria-hidden="true" className="h-4 w-4" />
+            Live Clinical Route
           </p>
-          <h2 className="mt-1 text-lg font-semibold text-ink">
-            Current destination
+          <h2 className="mt-1 text-lg font-bold text-ink">
+            Assigned Facility Destination
           </h2>
         </div>
 
@@ -101,74 +99,74 @@ export default function PatientRouteStatus({
           {rerouted && (
             <motion.span
               key="rerouted-badge"
-              initial={{ opacity: 0, y: -4 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -4 }}
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
               transition={{ duration: 0.2 }}
-              className="shrink-0 rounded-[4px] border border-signal-amber-border bg-signal-amber-soft px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-signal-amber-ink"
+              className="shrink-0 rounded-full border border-amber-300 bg-amber-100 px-3 py-1 font-mono text-[10px] font-bold uppercase tracking-wider text-amber-800 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-300"
             >
-              {rerouteFailed ? 'Manual coordination' : 'Rerouted'}
+              {rerouteFailed ? 'Manual Coordination' : 'Rerouted'}
             </motion.span>
           )}
         </AnimatePresence>
       </div>
 
-      <div className="mt-4 flex items-start gap-3 rounded-[6px] border border-border bg-surface-muted p-3">
+      <div className="mt-4 flex items-start gap-4 rounded-xl border border-border/80 bg-surface-muted/60 p-4">
         <span
           className={cn(
-            'grid h-9 w-9 shrink-0 place-items-center rounded-[6px] border bg-surface transition-colors duration-300',
+            'grid h-10 w-10 shrink-0 place-items-center rounded-xl border transition-all duration-300',
             flashing
-              ? 'border-signal-amber-border text-signal-amber-ink'
-              : 'border-brand-border text-brand-strong'
+              ? 'border-amber-400 bg-amber-100 text-amber-700 dark:bg-amber-900/60'
+              : 'border-teal-500/30 bg-teal-50 text-teal-600 dark:bg-teal-950/60 dark:text-teal-400'
           )}
         >
-          <MapPin aria-hidden="true" className="h-4 w-4" />
+          <MapPin aria-hidden="true" className="h-5 w-5" />
         </span>
 
         <div className="min-w-0">
           <AnimatePresence mode="wait" initial={false}>
             <motion.p
               key={facilityName ?? 'unassigned'}
-              initial={{ opacity: 0, y: 6 }}
+              initial={{ opacity: 0, y: 4 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -6 }}
-              transition={{ duration: 0.28, ease: 'easeOut' }}
+              exit={{ opacity: 0, y: -4 }}
+              transition={{ duration: 0.25 }}
               className={cn(
-                'text-sm font-semibold leading-5 transition-colors duration-300',
-                flashing ? 'text-signal-amber-ink' : 'text-ink'
+                'text-base font-bold leading-tight transition-colors duration-300',
+                flashing ? 'text-amber-800 dark:text-amber-300' : 'text-ink'
               )}
             >
               {facilityName ?? 'Awaiting facility assignment'}
             </motion.p>
           </AnimatePresence>
 
-          <p className="mt-0.5 text-xs leading-5 text-ink-muted">
+          <p className="mt-1 text-xs text-ink-muted">
             {rerouteFailed
-              ? 'No alternative facility is available automatically. Your care team will coordinate the next step with you.'
+              ? 'Automatic routing limit reached. Clinical coordinators are manually dispatching your case.'
               : rerouted
-                ? 'Your care team reassigned you automatically after a facility update.'
-                : 'Confirmed by the routing agent and reviewed by your clinician.'}
+                ? `${activeRoute.previous_facility_name ?? 'The previous facility'} → ${facilityName}. ${activeRoute.reason ?? 'Your route was updated by the network.'}`
+                : 'Manchester Triage verified and dispatched to regional network.'}
           </p>
         </div>
       </div>
 
-      <dl className="mt-4 grid grid-cols-2 gap-3 border-t border-border pt-4">
+      <dl className="mt-4 grid grid-cols-2 gap-4 border-t border-border/80 pt-4">
         <div>
-          <dt className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-ink-muted">
-            <Clock3 aria-hidden="true" className="h-3.5 w-3.5" />
-            Estimated time of arrival
+          <dt className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-ink-muted">
+            <Clock3 aria-hidden="true" className="h-3.5 w-3.5 text-teal-600 dark:text-teal-400" />
+            Estimated Transit ETA
           </dt>
-          <dd className="mt-1 font-mono text-sm font-semibold text-ink">
+          <dd className="mt-1 font-mono text-base font-bold text-ink">
             {resolvedEta != null ? `${resolvedEta} min` : '—'}
           </dd>
         </div>
 
         <div>
-          <dt className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-ink-muted">
-            <Stethoscope aria-hidden="true" className="h-3.5 w-3.5" />
-            Care tier
+          <dt className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-ink-muted">
+            <Stethoscope aria-hidden="true" className="h-3.5 w-3.5 text-teal-600 dark:text-teal-400" />
+            Care Pathway
           </dt>
-          <dd className="mt-1 text-sm font-semibold text-ink">
+          <dd className="mt-1 text-sm font-bold text-ink">
             {resolvedTier ? getCareTierLabel(resolvedTier) : '—'}
           </dd>
         </div>
