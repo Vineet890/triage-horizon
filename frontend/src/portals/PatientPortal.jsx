@@ -50,7 +50,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import api, { getApiErrorMessage } from '../lib/api';
 import socket from '../lib/socket';
 import { getAcuityMeta, getCareTierLabel } from '../lib/clinical';
@@ -2781,10 +2781,55 @@ export default function PatientPortal() {
   const setActiveEncounter = useTriageStore((state) => state.setActiveEncounter);
   const setAgentTrace = useTriageStore((state) => state.setAgentTrace);
 
+  const [searchParams, setSearchParams] = useSearchParams();
+  const location = useLocation();
+
   const [activeTab, setActiveTab] = useState(() => {
     const requestedTab = new URLSearchParams(window.location.search).get('tab');
-    return requestedTab === 'medications' ? requestedTab : 'chat';
+    return requestedTab === 'medications' || requestedTab === 'mental-health'
+      ? requestedTab
+      : 'chat';
   });
+
+  const handleTabChange = (nextTab) => {
+    setActiveTab(nextTab);
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        if (nextTab === 'chat') {
+          next.delete('tab');
+        } else {
+          next.set('tab', nextTab);
+        }
+        return next;
+      },
+      { replace: true }
+    );
+  };
+
+  useEffect(() => {
+    const requestedTab = new URLSearchParams(location.search).get('tab');
+    if (requestedTab === 'medications' || requestedTab === 'mental-health') {
+      setActiveTab(requestedTab);
+    } else if (requestedTab === 'chat') {
+      setActiveTab('chat');
+    }
+  }, [location.search]);
+
+  useEffect(() => {
+    if (!('serviceWorker' in navigator)) return undefined;
+
+    const handleServiceWorkerMessage = (event) => {
+      if (event.data?.type === 'OPEN_TAB' && event.data?.tab) {
+        handleTabChange(event.data.tab);
+      }
+    };
+
+    navigator.serviceWorker.addEventListener('message', handleServiceWorkerMessage);
+    return () => {
+      navigator.serviceWorker.removeEventListener('message', handleServiceWorkerMessage);
+    };
+  }, []);
   const [symptom, setSymptom] = useState('');
   const [isListening, setIsListening] = useState(false);
   const [interimTranscript, setInterimTranscript] = useState('');
@@ -3042,42 +3087,62 @@ export default function PatientPortal() {
     if (auth?.role !== 'PATIENT' || !auth?.userId) return undefined;
     let active = true;
 
-    api
-      .get('/medications/plan')
-      .then(({ data }) => {
-        if (!active) return;
-        const plan = data.plan ?? null;
-        setStoredMedicationPlan(plan);
-        setMedicationPlanUserId(auth.userId);
-        setPushPublicKey(data.push_public_key ?? '');
-        setMedicationError('');
-        setPushStatus(data.push_public_key ? 'ready' : 'unavailable');
+    const loadMedicationPlan = () => {
+      api
+        .get('/medications/plan')
+        .then(({ data }) => {
+          if (!active) return;
+          const plan = data.plan ?? null;
+          setStoredMedicationPlan(plan);
+          setMedicationPlanUserId(auth.userId);
+          setPushPublicKey(data.push_public_key ?? '');
+          setMedicationError('');
+          setPushStatus(data.push_public_key ? 'ready' : 'unavailable');
 
-        const today = getTodayInTimezone(plan?.timezone);
-        setTakenMeds(
-          Object.fromEntries(
-            (plan?.dose_events ?? [])
-              .filter((entry) => entry.date === today)
-              .map((entry) => [
-                medicationDoseKey(entry.medication_id, entry.scheduled_time),
-                true,
-              ])
-          )
-        );
-      })
-      .catch((requestError) => {
-        if (!active) return;
-        setMedicationError(
-          getApiErrorMessage(
-            requestError,
-            'Your medication plan could not be loaded.'
-          )
-        );
-        setPushStatus('error');
-      });
+          const today = getTodayInTimezone(plan?.timezone);
+          setTakenMeds(
+            Object.fromEntries(
+              (plan?.dose_events ?? [])
+                .filter((entry) => entry.date === today)
+                .map((entry) => [
+                  medicationDoseKey(
+                    entry.medication_id,
+                    entry.scheduled_time
+                  ),
+                  true,
+                ])
+            )
+          );
+        })
+        .catch((requestError) => {
+          if (!active) return;
+          setMedicationError(
+            getApiErrorMessage(
+              requestError,
+              'Your medication plan could not be loaded.'
+            )
+          );
+          setPushStatus('error');
+        });
+    };
+    const refreshWhenVisible = () => {
+      if (document.visibilityState === 'visible') loadMedicationPlan();
+    };
+
+    loadMedicationPlan();
+    document.addEventListener('visibilitychange', refreshWhenVisible);
+    window.addEventListener('focus', refreshWhenVisible);
+    window.addEventListener('pageshow', refreshWhenVisible);
+    const refreshTimer = window.setInterval(() => {
+      if (document.visibilityState === 'visible') loadMedicationPlan();
+    }, 30_000);
 
     return () => {
       active = false;
+      document.removeEventListener('visibilitychange', refreshWhenVisible);
+      window.removeEventListener('focus', refreshWhenVisible);
+      window.removeEventListener('pageshow', refreshWhenVisible);
+      window.clearInterval(refreshTimer);
     };
   }, [auth?.role, auth?.userId]);
 
@@ -3784,7 +3849,12 @@ export default function PatientPortal() {
           key={reminder.key}
           role="alert"
           aria-live="assertive"
-          className="fixed right-4 top-32 z-[70] w-[calc(100vw-2rem)] max-w-md rounded-xl border border-amber-300 bg-white p-4 shadow-xl dark:border-amber-800 dark:bg-slate-900 sm:right-6"
+          onClick={(e) => {
+            if (!e.target.closest('button')) {
+              handleTabChange('medications');
+            }
+          }}
+          className="fixed right-4 top-32 z-[70] w-[calc(100vw-2rem)] max-w-md cursor-pointer rounded-xl border border-amber-300 bg-white p-4 shadow-xl transition-all hover:border-amber-400 hover:shadow-2xl dark:border-amber-800 dark:bg-slate-900 sm:right-6"
         >
           <div className="flex items-start gap-3">
             <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300">
@@ -3819,10 +3889,10 @@ export default function PatientPortal() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => setActiveTab('medications')}
+                  onClick={() => handleTabChange('medications')}
                   className="rounded-lg border border-border px-3 py-1.5 text-xs font-semibold text-ink hover:bg-surface-muted"
                 >
-                  Open medication plan
+                  Open Medicine Adherence
                 </button>
               </div>
             </div>
@@ -3844,7 +3914,7 @@ export default function PatientPortal() {
       <PatientSidebar
         patient={patient}
         activeTab={activeTab}
-        onTabChange={setActiveTab}
+        onTabChange={handleTabChange}
         onSignOut={handleSignOut}
         socketConnected={socketConnected}
       />
@@ -3853,7 +3923,7 @@ export default function PatientPortal() {
         <PatientTopbar
           patient={patient}
           activeTab={activeTab}
-          onTabChange={setActiveTab}
+          onTabChange={handleTabChange}
           onSignOut={handleSignOut}
           socketConnected={socketConnected}
         />
@@ -3925,7 +3995,7 @@ export default function PatientPortal() {
               onJoinVideo={handleJoinVideo}
               onEndVideo={handleEndVideo}
               onDismissVideo={handleDismissVideo}
-              onTabChange={setActiveTab}
+              onTabChange={handleTabChange}
               medicationPlan={medicationPlan}
               takenMeds={takenMeds}
             />

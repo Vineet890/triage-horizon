@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   AlertCircle,
   ArrowLeft,
@@ -236,6 +236,7 @@ function DemoAccess({ onFill }) {
 
 export default function LoginPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
   const reduceMotion = useReducedMotion();
   const auth = useTriageStore((state) => state.auth);
@@ -300,7 +301,15 @@ export default function LoginPage() {
       setCurrentPatient(buildPatientProfile(data));
     }
 
-    navigate(ROLE_PATHS[data.role] ?? '/', { replace: true });
+    const rolePath = ROLE_PATHS[data.role] ?? '/';
+    const requestedPath = location.state?.from;
+    const destination =
+      requestedPath?.pathname === rolePath &&
+      typeof requestedPath.search === 'string'
+        ? `${rolePath}${requestedPath.search}`
+        : rolePath;
+
+    navigate(destination, { replace: true });
   };
 
   const handleLogin = async (event) => {

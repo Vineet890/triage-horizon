@@ -14,7 +14,7 @@ export const USE_LIVE_LLM = process.env.USE_LIVE_LLM === 'true';
 
 export const ML_SERVICE_URL = process.env.ML_SERVICE_URL || 'http://localhost:8001';
 export const GROQ_API_KEY = process.env.GROQ_API_KEY || '';
-export const GROQ_MODEL = process.env.GROQ_MODEL || 'openai/gpt-oss-20b';
+export const GROQ_MODEL = process.env.GROQ_MODEL || 'llama-3.3-70b-versatile';
 
 export const JWT_SECRET = process.env.JWT_SECRET || 'dev_secret';
 

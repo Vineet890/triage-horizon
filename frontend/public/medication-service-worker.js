@@ -22,14 +22,29 @@ self.addEventListener('push', (event) => {
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
   const destination = new URL(
-    event.notification.data?.url || '/patient?tab=medications',
+    '/patient?tab=medications',
     self.location.origin
   ).href;
 
   event.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
-      const existing = clients.find((client) => client.url.startsWith(self.location.origin));
-      return existing ? existing.navigate(destination) : self.clients.openWindow(destination);
+      const patientPortal = clients.find(
+        (client) => new URL(client.url).pathname === '/patient'
+      );
+
+      if (!patientPortal) return self.clients.openWindow(destination);
+
+      if (typeof patientPortal.postMessage === 'function') {
+        patientPortal.postMessage({ type: 'OPEN_TAB', tab: 'medications' });
+      }
+
+      return patientPortal.navigate(destination).then((client) => {
+        const target = client ?? patientPortal;
+        if (target && typeof target.postMessage === 'function') {
+          target.postMessage({ type: 'OPEN_TAB', tab: 'medications' });
+        }
+        return target && typeof target.focus === 'function' ? target.focus() : undefined;
+      });
     })
   );
 });

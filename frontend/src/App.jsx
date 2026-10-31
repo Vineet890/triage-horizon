@@ -41,7 +41,18 @@ function RequireRole({ role, children }) {
   const location = useLocation();
 
   if (!auth) {
-    return <Navigate to="/login" state={{ from: location.pathname }} replace />;
+    return (
+      <Navigate
+        to="/login"
+        state={{
+          from: {
+            pathname: location.pathname,
+            search: location.search,
+          },
+        }}
+        replace
+      />
+    );
   }
 
   if (role && auth.role !== role) {
@@ -138,6 +149,13 @@ export default function App() {
 
     const handleConnect = () => {
       setSocketConnected(true);
+      refreshSnapshots();
+    };
+
+    let lastSnapshotRefreshAt = 0;
+    const refreshSnapshots = () => {
+      if (Date.now() - lastSnapshotRefreshAt < 1000) return;
+      lastSnapshotRefreshAt = Date.now();
       loadFacilities();
       loadEncounters();
 
@@ -146,13 +164,18 @@ export default function App() {
       }
     };
 
+    const refreshWhenVisible = () => {
+      if (document.visibilityState === 'visible') refreshSnapshots();
+    };
+
     const handleDisconnect = () => setSocketConnected(false);
     const handleConnectError = () => setSocketConnected(false);
 
     const handleFacilityState = (payload) => updateFacility(payload);
     const handleRouteUpdate = (payload) => applyRouteUpdate(payload);
     const handleTriageComplete = (payload) => {
-      if (auth.role === 'ADMIN') addTriageEvent(payload);
+      addTriageEvent(payload);
+      loadEncounters();
     };
     const handleEncounterUpdated = (payload) => upsertEncounter(payload);
 
@@ -183,8 +206,7 @@ export default function App() {
       setFacilities(Array.from(byId.values()));
     };
 
-    loadFacilities();
-    loadEncounters();
+    refreshSnapshots();
 
     socket.auth = { token: auth.token };
     socket.on('connect', handleConnect);
@@ -197,6 +219,12 @@ export default function App() {
     socket.on('AGENT_THINKING', handleAgentThinking);
     socket.on('PRESCRIPTION_SENT', handlePrescriptionSent);
     socket.on('ADMIN_STATE_SYNC', handleAdminSync);
+    document.addEventListener('visibilitychange', refreshWhenVisible);
+    window.addEventListener('focus', refreshWhenVisible);
+    window.addEventListener('pageshow', refreshWhenVisible);
+    const refreshTimer = window.setInterval(() => {
+      if (document.visibilityState === 'visible') refreshSnapshots();
+    }, 30_000);
 
     setSocketConnected(socket.connected);
     socket.connect();
@@ -213,6 +241,10 @@ export default function App() {
       socket.off('AGENT_THINKING', handleAgentThinking);
       socket.off('PRESCRIPTION_SENT', handlePrescriptionSent);
       socket.off('ADMIN_STATE_SYNC', handleAdminSync);
+      document.removeEventListener('visibilitychange', refreshWhenVisible);
+      window.removeEventListener('focus', refreshWhenVisible);
+      window.removeEventListener('pageshow', refreshWhenVisible);
+      window.clearInterval(refreshTimer);
       socket.disconnect();
     };
   }, [

@@ -2585,6 +2585,30 @@ export default function AdminPortal() {
   }, []);
 
   useEffect(() => {
+    const refreshAnalyticsWhenVisible = () => {
+      if (document.visibilityState === 'visible') loadAnalytics();
+    };
+    const refreshTimer = window.setInterval(
+      refreshAnalyticsWhenVisible,
+      30_000
+    );
+
+    document.addEventListener('visibilitychange', refreshAnalyticsWhenVisible);
+    window.addEventListener('focus', refreshAnalyticsWhenVisible);
+    window.addEventListener('pageshow', refreshAnalyticsWhenVisible);
+
+    return () => {
+      document.removeEventListener(
+        'visibilitychange',
+        refreshAnalyticsWhenVisible
+      );
+      window.removeEventListener('focus', refreshAnalyticsWhenVisible);
+      window.removeEventListener('pageshow', refreshAnalyticsWhenVisible);
+      window.clearInterval(refreshTimer);
+    };
+  }, []);
+
+  useEffect(() => {
     let active = true;
 
     api

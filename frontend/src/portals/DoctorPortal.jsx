@@ -28,6 +28,7 @@ import {
   Plus,
   Printer,
   Radio,
+  RefreshCw,
   Send,
   ShieldAlert,
   ShieldCheck,
@@ -1923,6 +1924,20 @@ export default function DoctorPortal() {
     return selectedEncounter.agent_trace ?? [];
   }, [agentTrace, agentTraceEncounterId, selectedEncounter]);
 
+  const [syncingQueue, setSyncingQueue] = useState(false);
+
+  const syncEncounters = async () => {
+    setSyncingQueue(true);
+    try {
+      const { data } = await api.get('/encounters?active=true');
+      setEncounters(data.encounters ?? data);
+    } catch {
+      // Socket fallback
+    } finally {
+      setSyncingQueue(false);
+    }
+  };
+
   useEffect(() => {
     let active = true;
 
@@ -1933,8 +1948,28 @@ export default function DoctorPortal() {
       })
       .catch(() => {});
 
+    const refreshWhenVisible = () => {
+      if (document.visibilityState === 'visible') {
+        api
+          .get('/encounters?active=true')
+          .then(({ data }) => {
+            if (active) setEncounters(data.encounters ?? data);
+          })
+          .catch(() => {});
+      }
+    };
+
+    const intervalId = window.setInterval(refreshWhenVisible, 15_000);
+    document.addEventListener('visibilitychange', refreshWhenVisible);
+    window.addEventListener('focus', refreshWhenVisible);
+    window.addEventListener('pageshow', refreshWhenVisible);
+
     return () => {
       active = false;
+      window.clearInterval(intervalId);
+      document.removeEventListener('visibilitychange', refreshWhenVisible);
+      window.removeEventListener('focus', refreshWhenVisible);
+      window.removeEventListener('pageshow', refreshWhenVisible);
     };
   }, [setEncounters]);
 
@@ -2083,6 +2118,46 @@ export default function DoctorPortal() {
 
     return () => {
       active = false;
+    };
+  }, [selectedId]);
+
+  useEffect(() => {
+    if (!selectedId) return undefined;
+    let active = true;
+
+    const refreshHandoff = () => {
+      if (document.visibilityState !== 'visible') return;
+
+      api
+        .get(`/handoff/${selectedId}`)
+        .then(({ data }) => {
+          if (active) {
+            setHandoff(data);
+            setHandoffError('');
+          }
+        })
+        .catch((requestError) => {
+          if (!active) return;
+          setHandoffError(
+            getApiErrorMessage(
+              requestError,
+              'Unable to refresh the handoff record.'
+            )
+          );
+        });
+    };
+    const refreshTimer = window.setInterval(refreshHandoff, 30_000);
+
+    document.addEventListener('visibilitychange', refreshHandoff);
+    window.addEventListener('focus', refreshHandoff);
+    window.addEventListener('pageshow', refreshHandoff);
+
+    return () => {
+      active = false;
+      document.removeEventListener('visibilitychange', refreshHandoff);
+      window.removeEventListener('focus', refreshHandoff);
+      window.removeEventListener('pageshow', refreshHandoff);
+      window.clearInterval(refreshTimer);
     };
   }, [selectedId]);
 
@@ -2406,7 +2481,20 @@ export default function DoctorPortal() {
                 <p className="font-mono text-[10px] font-bold uppercase tracking-wider text-ink-muted">
                   Feed Status
                 </p>
-                <Radio className="h-4 w-4 text-emerald-500 animate-pulse" />
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={syncEncounters}
+                    disabled={syncingQueue}
+                    title="Refresh patient queue"
+                    aria-label="Refresh patient queue"
+                    className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-semibold text-brand-strong hover:bg-brand-soft transition-colors disabled:opacity-50"
+                  >
+                    <RefreshCw className={cn('h-3 w-3', syncingQueue && 'animate-spin')} />
+                    <span>{syncingQueue ? 'Syncing...' : 'Refresh'}</span>
+                  </button>
+                  <Radio className="h-4 w-4 text-emerald-500 animate-pulse" />
+                </div>
               </div>
               <p className="mt-2 flex items-center gap-2 font-mono text-2xl font-extrabold text-ink">
                 <span

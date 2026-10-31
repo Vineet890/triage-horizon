@@ -13,6 +13,7 @@ function loadServiceWorker(existingClients = []) {
   const shownNotifications = [];
   const openedWindows = [];
   const navigatedClients = [];
+  const focusedClients = [];
   const origin = 'https://triage-horizon.example';
   const self = {
     location: { origin },
@@ -25,13 +26,21 @@ function loadServiceWorker(existingClients = []) {
       matchAll: async () => existingClients,
       openWindow: async (url) => {
         openedWindows.push(url);
+        return { focus: async () => focusedClients.push(url) };
       },
     },
     addEventListener: (name, listener) => listeners.set(name, listener),
   };
 
   runInNewContext(serviceWorkerSource, { self, URL, Promise });
-  return { listeners, shownNotifications, openedWindows, navigatedClients, origin };
+  return {
+    listeners,
+    shownNotifications,
+    openedWindows,
+    navigatedClients,
+    focusedClients,
+    origin,
+  };
 }
 
 test('displays a pushed dose alert without an active app login', async () => {
@@ -85,7 +94,7 @@ test('opens the medication plan when a logged-out user clicks the notification',
   ]);
 });
 
-test('reuses an existing browser tab to open the medication plan', async () => {
+test('opens a patient tab instead of redirecting another portal', async () => {
   const navigatedClients = [];
   const existingClient = {
     url: 'https://triage-horizon.example/login',
@@ -107,8 +116,40 @@ test('reuses an existing browser tab to open the medication plan', async () => {
   worker.listeners.get('notificationclick')(event);
   await event.pending;
 
+  assert.deepEqual(navigatedClients, []);
+  assert.deepEqual(worker.openedWindows, [
+    `${worker.origin}/patient?tab=medications`,
+  ]);
+});
+
+test('reuses and focuses an existing patient portal tab', async () => {
+  const navigatedClients = [];
+  const focusedClients = [];
+  const existingClient = {
+    url: 'https://triage-horizon.example/patient?tab=chat',
+    navigate: async (url) => {
+      navigatedClients.push(url);
+      return existingClient;
+    },
+    focus: async () => focusedClients.push(existingClient.url),
+  };
+  const worker = loadServiceWorker([existingClient]);
+  const event = {
+    notification: {
+      data: { url: '/some-other-route' },
+      close() {},
+    },
+    waitUntil: (promise) => {
+      event.pending = promise;
+    },
+  };
+
+  worker.listeners.get('notificationclick')(event);
+  await event.pending;
+
   assert.deepEqual(navigatedClients, [
     `${worker.origin}/patient?tab=medications`,
   ]);
+  assert.deepEqual(focusedClients, [existingClient.url]);
   assert.deepEqual(worker.openedWindows, []);
 });
